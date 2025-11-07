@@ -29,8 +29,8 @@ Hardware security device for Raspberry Pi 4B with ST7789 320x240 TFT display, HW
 
 ```bash
 cd ~
-git clone https://github.com/yourusername/cryptowallet.git
-cd cryptowallet
+git clone https://github.com/mankin3n/cryptowallet-ST7789.git
+cd cryptowallet-ST7789
 ```
 
 ### 2. Install System Dependencies
