@@ -238,7 +238,3 @@ MIT License - See LICENSE file for details
 - [SeedSigner Project](https://github.com/SeedSigner/seedsigner)
 - [Raspberry Pi Documentation](https://www.raspberrypi.com/documentation/)
 - [Bitcoin Developer Guide](https://developer.bitcoin.org/)
-
----
-
-**Built with ❤️ for the Bitcoin and open-source communities**
