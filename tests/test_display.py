@@ -11,41 +11,42 @@ import config
 # Force mock mode for testing
 config.MOCK_HARDWARE = True
 
-from hardware.display import Display, get_display
+from hardware.display import get_display, DisplayBase
+import hardware.display as display_module
+
+@pytest.fixture(autouse=True)
+def reset_display_singleton():
+    """Reset the display singleton before each test."""
+    display_module._display = None
+
+@pytest.fixture
+def display() -> DisplayBase:
+    """Provides a display instance for tests."""
+    return get_display()
 
 
-def test_display_creation():
+def test_display_creation(display: DisplayBase):
     """Test display instance creation."""
-    display = Display()
     assert display.width == config.DISPLAY_WIDTH
     assert display.height == config.DISPLAY_HEIGHT
 
 
-def test_display_setup():
+def test_display_setup(display: DisplayBase):
     """Test display setup in mock mode."""
-    display = Display()
     result = display.setup()
     assert result is True
 
 
-def test_display_show_image():
+def test_display_show_image(display: DisplayBase):
     """Test showing image on display."""
-    display = Display()
     display.setup()
-
-    # Create test image
     test_image = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), (255, 0, 0))
-
-    # Should not raise exception
     display.show_image(test_image)
 
 
-def test_display_clear():
+def test_display_clear(display: DisplayBase):
     """Test clearing display."""
-    display = Display()
     display.setup()
-
-    # Should not raise exception
     display.clear()
     display.clear(config.COLOR_RED)
 
@@ -54,30 +55,21 @@ def test_display_singleton():
     """Test display singleton pattern."""
     display1 = get_display()
     display2 = get_display()
-
     assert display1 is display2
 
 
-def test_display_brightness():
+def test_display_brightness(display: DisplayBase):
     """Test brightness control."""
-    display = Display()
     display.setup()
-
-    # Should not raise exception
     display.set_brightness(50)
     display.set_brightness(100)
     display.set_brightness(0)
 
 
-def test_display_wrong_size_image():
+def test_display_wrong_size_image(display: DisplayBase):
     """Test handling of wrong size image."""
-    display = Display()
     display.setup()
-
-    # Create wrong size image
     wrong_image = Image.new('RGB', (100, 100), (0, 255, 0))
-
-    # Should resize automatically
     display.show_image(wrong_image)
 
 

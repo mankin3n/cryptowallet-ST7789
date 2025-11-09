@@ -8,7 +8,7 @@ Each function takes PageState and Theme, returns PIL Image.
 import logging
 import time
 from datetime import datetime
-from PIL import Image
+from PIL import Image, ImageDraw
 import config
 from ui.themes import Theme
 from ui.menu_system import PageState
@@ -34,7 +34,7 @@ def render_splash_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Hacker-style boot sequence
     y = 20
@@ -94,7 +94,7 @@ def render_home_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Terminal-style header
     y = 5
@@ -157,7 +157,7 @@ def render_verify_signature_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Terminal-style header
     draw.text((10, 10), "┌[SIGNATURE VERIFICATION]───────────┐",
@@ -215,7 +215,7 @@ def render_generate_qr_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # QR frame header
     y = 10
@@ -271,7 +271,7 @@ def render_view_address_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Terminal-style header
     draw.text((10, 10), "┌[₿ BITCOIN WALLET ADDRESS]─────────┐",
@@ -320,7 +320,7 @@ def render_camera_preview_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Header
     draw_header(draw, theme, "📷 CAMERA PREVIEW")
@@ -361,7 +361,7 @@ def render_settings_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Terminal-style settings header
     draw.text((10, 10), "┌[⚙ SYSTEM CONFIG]──────────────────┐",
@@ -412,7 +412,7 @@ def render_brightness_setting_page(state: PageState, theme: Theme) -> Image.Imag
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Header
     draw_header(draw, theme, "☀ BRIGHTNESS")
@@ -459,7 +459,7 @@ def render_timeout_setting_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Header
     draw_header(draw, theme, "⏱ SCREEN TIMEOUT")
@@ -512,7 +512,7 @@ def render_language_setting_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Header
     draw_header(draw, theme, "🌐 LANGUAGE")
@@ -552,7 +552,7 @@ def render_reset_setting_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Header
     draw_header(draw, theme, "🔄 RESET")
@@ -615,7 +615,7 @@ def render_about_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # System info header
     y = 10 - state.scroll_offset
@@ -678,7 +678,7 @@ def render_loading_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     y = 30
 
@@ -749,7 +749,7 @@ def render_error_page(state: PageState, theme: Theme) -> Image.Image:
         PIL Image (320x240)
     """
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
-    draw = canvas._getdraw()
+    draw = ImageDraw.Draw(canvas)
 
     # Error box ASCII art
     y = 10

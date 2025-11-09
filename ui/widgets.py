@@ -9,6 +9,7 @@ import logging
 from typing import Optional
 from PIL import Image, ImageDraw
 import qrcode
+import math
 import config
 from ui.themes import Theme
 
@@ -376,7 +377,6 @@ def draw_spinner(
         opacity = 255 - (i * 30)
 
         # Calculate segment position
-        import math
         rad = math.radians(angle)
         seg_x = x + int(radius * math.cos(rad))
         seg_y = y + int(radius * math.sin(rad))
