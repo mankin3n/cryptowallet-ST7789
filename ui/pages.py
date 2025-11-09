@@ -17,6 +17,7 @@ from ui.widgets import (
     draw_button, draw_slider, draw_progress_bar, draw_spinner,
     create_qr_code
 )
+from ui import ascii_art
 
 logger = logging.getLogger(__name__)
 
@@ -35,31 +36,48 @@ def render_splash_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Draw title
-    title = "🔐 SeedSigner Mini"
-    bbox = draw.textbbox((0, 0), title, font=theme.get_font('header'))
-    title_width = bbox[2] - bbox[0]
-    draw.text(
-        ((config.DISPLAY_WIDTH - title_width) // 2, 80),
-        title,
-        font=theme.get_font('header'),
-        fill=theme.get_color('WHITE')
-    )
+    # Hacker-style boot sequence
+    y = 20
+    for i, line in enumerate(ascii_art.BOOT_SEQUENCE[:4]):
+        if i < (state.spinner_frame // 2):
+            draw.text(
+                (10, y),
+                line,
+                font=theme.get_font('hint'),
+                fill=theme.get_color('GREEN')
+            )
+            y += 18
 
-    # Draw subtitle
-    subtitle = "Initializing..."
-    bbox = draw.textbbox((0, 0), subtitle, font=theme.get_font('body'))
-    subtitle_width = bbox[2] - bbox[0]
-    draw.text(
-        ((config.DISPLAY_WIDTH - subtitle_width) // 2, 120),
-        subtitle,
-        font=theme.get_font('body'),
-        fill=theme.get_color('GRAY')
-    )
+    # ASCII art logo
+    logo_lines = ascii_art.GLITCH_LOGO.strip().split('\n')
+    logo_y = 100
+    for line in logo_lines:
+        draw.text(
+            (20, logo_y),
+            line,
+            font=theme.get_font('body'),
+            fill=theme.get_color('CYAN')
+        )
+        logo_y += 20
 
-    # Draw spinner
+    # Terminal-style loading indicator
     state.update_spinner()
-    draw_spinner(draw, theme, (config.DISPLAY_WIDTH // 2, 160), state.spinner_frame)
+    loading_idx = state.spinner_frame % len(ascii_art.LOADING_FRAMES)
+    loading_bar = ascii_art.LOADING_FRAMES[loading_idx]
+    draw.text(
+        (config.DISPLAY_WIDTH // 2 - 30, 180),
+        loading_bar,
+        font=theme.get_font('body'),
+        fill=theme.get_color('GREEN')
+    )
+
+    # Matrix-style decoration at bottom
+    draw.text(
+        (10, config.DISPLAY_HEIGHT - 30),
+        ascii_art.MATRIX_LINES[state.spinner_frame % len(ascii_art.MATRIX_LINES)],
+        font=theme.get_font('hint'),
+        fill=theme.get_color('DARK_GREEN')
+    )
 
     return canvas
 
@@ -78,10 +96,27 @@ def render_home_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Header
-    draw_header(draw, theme, "🏠 MAIN MENU")
+    # Terminal-style header
+    y = 5
+    header_lines = ascii_art.TERMINAL_HEADER.strip().split('\n')
+    for line in header_lines:
+        draw.text(
+            (10, y),
+            line,
+            font=theme.get_font('hint'),
+            fill=theme.get_color('GREEN')
+        )
+        y += 15
 
-    # Menu items
+    # Separator
+    draw.text(
+        (10, y + 5),
+        ascii_art.GLITCH_SEP,
+        font=theme.get_font('hint'),
+        fill=theme.get_color('CYAN')
+    )
+
+    # Menu items with terminal pointer
     menu_items = [
         "Verify Signature",
         "Generate QR Code",
@@ -90,18 +125,22 @@ def render_home_page(state: PageState, theme: Theme) -> Image.Image:
         "About"
     ]
 
-    y_start = config.HEADER_HEIGHT + 20
+    y_start = y + 30
     item_spacing = 30
 
     for i, item in enumerate(menu_items):
-        draw_menu_item(
-            draw, theme, item,
-            y_start + (i * item_spacing),
-            selected=(i == state.menu_index)
+        prefix = ascii_art.MENU_SELECTED_PREFIX if i == state.menu_index else " "
+        color = theme.get_color('CYAN') if i == state.menu_index else theme.get_color('WHITE')
+
+        draw.text(
+            (15, y_start + (i * item_spacing)),
+            f"{prefix} {item}",
+            font=theme.get_font('menu'),
+            fill=color
         )
 
-    # Status bar
-    draw_status_bar(draw, theme, hint="▲▼ Select ✓ Enter")
+    # Status bar with hacker style
+    draw_status_bar(draw, theme, hint="↑↓ Select → Enter")
 
     return canvas
 
@@ -120,32 +159,46 @@ def render_verify_signature_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Header
-    draw_header(draw, theme, "✓ VERIFY SIGNATURE")
+    # Terminal-style header
+    draw.text((10, 10), "┌[SIGNATURE VERIFICATION]───────────┐",
+              font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
 
-    # Content area
-    y = config.HEADER_HEIGHT + 10
+    y = 40
 
-    # Status
-    status_text = "Valid" if state.signature_valid else "Invalid"
-    status_color = theme.get_color('GREEN') if state.signature_valid else theme.get_color('RED')
-
-    draw.text((config.MARGIN_SIDE, y), "Status:", font=theme.get_font('body'), fill=theme.get_color('WHITE'))
-    draw.text((config.MARGIN_SIDE + 80, y), status_text, font=theme.get_font('body'), fill=status_color)
-    y += 25
-
-    # Signature data
-    if state.signature_data:
-        draw.text((config.MARGIN_SIDE, y), "Signature:", font=theme.get_font('body'), fill=theme.get_color('WHITE'))
-        y += 20
-        sig_short = state.signature_data[:32] + "..." if len(state.signature_data) > 32 else state.signature_data
-        draw.text((config.MARGIN_SIDE, y), sig_short, font=theme.get_font('hint'), fill=theme.get_color('GRAY'))
-        y += 25
+    # Display validation result with ASCII art
+    if state.signature_valid:
+        result_lines = ascii_art.SIGNATURE_VALID.strip().split('\n')
+        color = theme.get_color('GREEN')
+        status_icon = ascii_art.STATUS_SUCCESS
     else:
-        draw.text((config.MARGIN_SIDE, y), "No signature loaded", font=theme.get_font('body'), fill=theme.get_color('GRAY'))
+        result_lines = ascii_art.SIGNATURE_INVALID.strip().split('\n')
+        color = theme.get_color('RED')
+        status_icon = ascii_art.STATUS_ERROR
+
+    for line in result_lines:
+        draw.text((60, y), line, font=theme.get_font('hint'), fill=color)
+        y += 15
+
+    y += 10
+
+    # Signature data with hex display
+    if state.signature_data:
+        draw.text((15, y), f"{status_icon} Signature Hash:",
+                  font=theme.get_font('body'), fill=theme.get_color('WHITE'))
+        y += 20
+
+        # Show as hex
+        hex_sig = ascii_art.hex_display(state.signature_data[:16], 8)
+        draw.text((20, y), f"0x{hex_sig}",
+                  font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
+        y += 20
+        draw.text((20, y), "...", font=theme.get_font('hint'), fill=theme.get_color('GRAY'))
+    else:
+        draw.text((15, y), f"{ascii_art.STATUS_ERROR} No signature data loaded",
+                  font=theme.get_font('body'), fill=theme.get_color('ORANGE'))
 
     # Status bar
-    draw_status_bar(draw, theme, hint="◀ Back")
+    draw_status_bar(draw, theme, hint="← Back")
 
     return canvas
 
@@ -164,8 +217,12 @@ def render_generate_qr_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Header
-    draw_header(draw, theme, "📱 QR CODE")
+    # QR frame header
+    y = 10
+    qr_header_lines = ascii_art.QR_FRAME_HEADER.strip().split('\n')
+    for line in qr_header_lines:
+        draw.text((10, y), line, font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
+        y += 15
 
     # Generate QR code
     qr_data = state.qr_data if state.qr_data else "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
@@ -176,21 +233,28 @@ def render_generate_qr_page(state: PageState, theme: Theme) -> Image.Image:
 
     # Center QR code
     qr_x = (config.DISPLAY_WIDTH - qr_size) // 2
-    qr_y = config.HEADER_HEIGHT + ((config.CONTENT_HEIGHT - qr_size) // 2)
+    qr_y = y + 10
 
     canvas.paste(qr_image, (qr_x, qr_y))
 
-    # Zoom indicator
-    zoom_text = f"Zoom: {state.qr_zoom}%"
+    # QR frame footer
+    y = qr_y + qr_size + 10
+    qr_footer_lines = ascii_art.QR_FRAME_FOOTER.strip().split('\n')
+    for line in qr_footer_lines:
+        draw.text((10, y), line, font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
+        y += 15
+
+    # Zoom indicator with progress bar style
+    zoom_text = f"[ZOOM: {state.qr_zoom}%]"
     draw.text(
-        (config.DISPLAY_WIDTH - 100, config.HEADER_HEIGHT + 10),
+        (config.DISPLAY_WIDTH - 120, y),
         zoom_text,
         font=theme.get_font('hint'),
-        fill=theme.get_color('GRAY')
+        fill=theme.get_color('GREEN')
     )
 
     # Status bar
-    draw_status_bar(draw, theme, hint="◀ Back ▲▼ Zoom")
+    draw_status_bar(draw, theme, hint="← Back ↑↓ Zoom")
 
     return canvas
 
@@ -209,38 +273,37 @@ def render_view_address_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Header
-    draw_header(draw, theme, "📍 BITCOIN ADDRESS")
+    # Terminal-style header
+    draw.text((10, 10), "┌[₿ BITCOIN WALLET ADDRESS]─────────┐",
+              font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
 
-    y = config.HEADER_HEIGHT + 10
+    y = 35
 
-    # Address type
+    # Address type with status indicator
     addr_type_display = state.bitcoin_address_type.replace('_', ' ').title()
-    draw.text((config.MARGIN_SIDE, y), f"Type: {addr_type_display}", font=theme.get_font('body'), fill=theme.get_color('WHITE'))
+    draw.text((15, y), f"{ascii_art.STATUS_ONLINE} Type: {addr_type_display}",
+              font=theme.get_font('body'), fill=theme.get_color('GREEN'))
     y += 25
 
-    # Address
+    # Address in terminal box
     address = state.bitcoin_address if state.bitcoin_address else "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
-    draw.text((config.MARGIN_SIDE, y), "Address:", font=theme.get_font('body'), fill=theme.get_color('WHITE'))
-    y += 20
 
-    # Wrap address text
-    draw_text(
-        draw, address,
-        (config.MARGIN_SIDE, y),
-        theme.get_font('hint'),
-        theme.get_color('CYAN'),
-        max_width=config.DISPLAY_WIDTH - (2 * config.MARGIN_SIDE)
-    )
-    y += 40
+    # Use terminal box format
+    addr_display = ascii_art.format_address_terminal(address)
+    addr_lines = addr_display.strip().split('\n')
+    for line in addr_lines:
+        draw.text((15, y), line, font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
+        y += 15
 
-    # QR code (smaller)
-    qr_image = create_qr_code(address, 100)
-    qr_x = (config.DISPLAY_WIDTH - 100) // 2
+    y += 5
+
+    # QR code (smaller) with frame
+    qr_image = create_qr_code(address, 90)
+    qr_x = (config.DISPLAY_WIDTH - 90) // 2
     canvas.paste(qr_image, (qr_x, y))
 
     # Status bar
-    draw_status_bar(draw, theme, hint="◀ Back ✓ Copy")
+    draw_status_bar(draw, theme, hint="← Back → Copy")
 
     return canvas
 
@@ -300,29 +363,39 @@ def render_settings_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Header
-    draw_header(draw, theme, "⚙ SETTINGS")
+    # Terminal-style settings header
+    draw.text((10, 10), "┌[⚙ SYSTEM CONFIG]──────────────────┐",
+              font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
 
-    # Menu items
+    # Menu items with terminal styling
     menu_items = [
-        "Display Brightness",
-        "Screen Timeout",
-        "Language",
-        "Reset to Defaults"
+        ("Display Brightness", "☀"),
+        ("Screen Timeout", "⏱"),
+        ("Language", "🌐"),
+        ("Reset to Defaults", "🔄")
     ]
 
-    y_start = config.HEADER_HEIGHT + 20
+    y_start = 45
     item_spacing = 35
 
-    for i, item in enumerate(menu_items):
-        draw_menu_item(
-            draw, theme, item,
-            y_start + (i * item_spacing),
-            selected=(i == state.menu_index)
+    for i, (item, icon) in enumerate(menu_items):
+        prefix = ">>" if i == state.menu_index else "  "
+        color = theme.get_color('CYAN') if i == state.menu_index else theme.get_color('WHITE')
+
+        draw.text(
+            (15, y_start + (i * item_spacing)),
+            f"{prefix} {icon} {item}",
+            font=theme.get_font('menu'),
+            fill=color
         )
 
+    # Separator at bottom
+    draw.text((10, y_start + (len(menu_items) * item_spacing) + 10),
+              ascii_art.GLITCH_SEP[:35],
+              font=theme.get_font('hint'), fill=theme.get_color('DARK_GREEN'))
+
     # Status bar
-    draw_status_bar(draw, theme, hint="◀ Back ▶ Enter")
+    draw_status_bar(draw, theme, hint="← Back → Enter")
 
     return canvas
 
@@ -544,37 +617,51 @@ def render_about_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Header
-    draw_header(draw, theme, "ℹ ABOUT")
+    # System info header
+    y = 10 - state.scroll_offset
+    info_header_lines = ascii_art.SYSTEM_INFO_HEADER.strip().split('\n')
+    for line in info_header_lines:
+        draw.text((10, y), line, font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
+        y += 15
 
-    y = config.HEADER_HEIGHT + 10 - state.scroll_offset
-
-    # Device info
+    # Device info with terminal styling
     info_lines = [
-        ("Device:", "SeedSigner Mini"),
-        ("Version:", "1.0.0"),
-        ("Build:", datetime.now().strftime("%Y%m%d")),
+        (f"{ascii_art.STATUS_ONLINE} Device:", "SeedSigner Mini"),
+        (f"{ascii_art.STATUS_SUCCESS} Version:", "v1.0.0-HACKER"),
+        (f"{ascii_art.STATUS_PROCESSING} Build:", datetime.now().strftime("0x%Y%m%d")),
         ("", ""),
-        ("Hardware:", ""),
+        ("Hardware Specs:", ""),
         ("├─ Display:", "ST7789 320x240"),
         ("├─ Camera:", "RPi Cam v2/v3"),
         ("├─ Input:", "HW-504 Joystick"),
         ("└─ CPU:", "Raspberry Pi 4B"),
+        ("", ""),
+        ("Security:", ""),
+        ("├─ Air-Gapped:", "YES"),
+        ("├─ Encrypted:", "YES"),
+        ("└─ Open Source:", "YES"),
     ]
 
     for label, value in info_lines:
         if label:
             full_text = f"{label} {value}"
+            color = theme.get_color('GREEN') if label.startswith('├') or label.startswith('└') else theme.get_color('CYAN')
             draw.text(
-                (config.MARGIN_SIDE, y),
+                (15, y),
                 full_text,
-                font=theme.get_font('body') if not label.startswith('├') and not label.startswith('└') else theme.get_font('hint'),
-                fill=theme.get_color('WHITE') if not label.startswith('├') and not label.startswith('└') else theme.get_color('GRAY')
+                font=theme.get_font('hint'),
+                fill=color
             )
-        y += 18
+        y += 16
+
+    # Footer
+    footer_lines = ascii_art.SYSTEM_INFO_FOOTER.strip().split('\n')
+    for line in footer_lines:
+        draw.text((10, y), line, font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
+        y += 15
 
     # Status bar
-    draw_status_bar(draw, theme, hint="◀ Back ▲▼ Scroll")
+    draw_status_bar(draw, theme, hint="← Back ↑↓ Scroll")
 
     return canvas
 
@@ -593,27 +680,59 @@ def render_loading_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Header
-    draw_header(draw, theme, "⏳ PROCESSING...")
+    y = 30
+
+    # Processing indicator
+    draw.text((10, y), "┌[PROCESSING]────────────────────────┐",
+              font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
+    y += 25
 
     # Loading message
-    message = state.loading_message
-    bbox = draw.textbbox((0, 0), message, font=theme.get_font('body'))
-    message_width = bbox[2] - bbox[0]
+    message = state.loading_message if state.loading_message else "Please wait..."
     draw.text(
-        ((config.DISPLAY_WIDTH - message_width) // 2, 80),
-        message,
+        (20, y),
+        f"{ascii_art.STATUS_PROCESSING} {message}",
         font=theme.get_font('body'),
-        fill=theme.get_color('WHITE')
+        fill=theme.get_color('GREEN')
     )
+    y += 30
 
-    # Spinner
+    # Animated loading bar
     state.update_spinner()
-    draw_spinner(draw, theme, (config.DISPLAY_WIDTH // 2, 130), state.spinner_frame)
+    loading_idx = state.spinner_frame % len(ascii_art.LOADING_FRAMES)
+    loading_animation = ascii_art.LOADING_FRAMES[loading_idx]
+    draw.text(
+        (config.DISPLAY_WIDTH // 2 - 30, y),
+        loading_animation,
+        font=theme.get_font('body'),
+        fill=theme.get_color('CYAN')
+    )
+    y += 30
 
-    # Progress bar
+    # Encryption animation
+    encrypt_idx = state.spinner_frame % len(ascii_art.ENCRYPT_FRAMES)
+    encrypt_bar = ascii_art.ENCRYPT_FRAMES[encrypt_idx]
+    draw.text(
+        (config.DISPLAY_WIDTH // 2 - 40, y),
+        encrypt_bar,
+        font=theme.get_font('body'),
+        fill=theme.get_color('GREEN')
+    )
+    y += 30
+
+    # Progress bar if available
     if state.loading_progress > 0:
-        draw_progress_bar(draw, theme, state.loading_progress, (20, 170))
+        progress_text = ascii_art.draw_hacker_progress(state.loading_progress, 28)
+        draw.text((20, y), progress_text, font=theme.get_font('hint'), fill=theme.get_color('CYAN'))
+
+    # Data stream decoration
+    stream_idx = state.spinner_frame % len(ascii_art.DATA_STREAM)
+    draw.text(
+        (10, config.DISPLAY_HEIGHT - 40),
+        ascii_art.DATA_STREAM[stream_idx],
+        font=theme.get_font('hint'),
+        fill=theme.get_color('DARK_GREEN')
+    )
 
     return canvas
 
@@ -632,38 +751,56 @@ def render_error_page(state: PageState, theme: Theme) -> Image.Image:
     canvas = Image.new('RGB', (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), theme.get_color('BLACK'))
     draw = canvas._getdraw()
 
-    # Header
-    draw_header(draw, theme, "⚠ ERROR")
+    # Error box ASCII art
+    y = 10
+    error_lines = ascii_art.ERROR_BOX.strip().split('\n')
+    for line in error_lines[:7]:  # Show first 7 lines of error box
+        draw.text((5, y), line, font=theme.get_font('hint'), fill=theme.get_color('RED'))
+        y += 14
 
-    y = config.HEADER_HEIGHT + 20
+    y += 10
 
     # Error message
-    error_text = state.error_message if state.error_message else "An error occurred"
-    y += draw_text(
+    error_text = state.error_message if state.error_message else "System malfunction detected"
+    draw_text(
         draw, error_text,
-        (config.MARGIN_SIDE, y),
+        (15, y),
         theme.get_font('body'),
-        theme.get_color('RED'),
-        max_width=config.DISPLAY_WIDTH - (2 * config.MARGIN_SIDE)
-    ) + 10
+        theme.get_color('ORANGE'),
+        max_width=config.DISPLAY_WIDTH - 30
+    )
+    y += 35
 
-    # Error code
+    # Error code with hex display
     if state.error_code:
         draw.text(
-            (config.MARGIN_SIDE, y),
-            f"Code: {state.error_code}",
+            (15, y),
+            f"{ascii_art.STATUS_ERROR} Error Code: 0x{hash(state.error_code) & 0xFFFF:04X}",
+            font=theme.get_font('hint'),
+            fill=theme.get_color('RED')
+        )
+        y += 20
+        draw.text(
+            (15, y),
+            f"Details: {state.error_code[:30]}",
             font=theme.get_font('hint'),
             fill=theme.get_color('GRAY')
         )
-        y += 30
 
-    # Buttons
-    button_y = config.DISPLAY_HEIGHT - config.STATUS_BAR_HEIGHT - 50
-    draw_button(draw, theme, "Retry", (50, button_y), selected=(state.menu_index == 0))
-    draw_button(draw, theme, "Back", (170, button_y), selected=(state.menu_index == 1))
+    # Action prompts (hacker style)
+    button_y = config.DISPLAY_HEIGHT - config.STATUS_BAR_HEIGHT - 45
+    retry_prefix = ">>" if state.menu_index == 0 else "  "
+    back_prefix = ">>" if state.menu_index == 1 else "  "
+
+    draw.text((20, button_y), f"{retry_prefix} [RETRY]",
+              font=theme.get_font('body'),
+              fill=theme.get_color('CYAN') if state.menu_index == 0 else theme.get_color('GRAY'))
+    draw.text((160, button_y), f"{back_prefix} [BACK]",
+              font=theme.get_font('body'),
+              fill=theme.get_color('CYAN') if state.menu_index == 1 else theme.get_color('GRAY'))
 
     # Status bar
-    draw_status_bar(draw, theme, hint="▲▼ Select ✓ Execute")
+    draw_status_bar(draw, theme, hint="← → Select ✓ Execute")
 
     return canvas
 
