@@ -123,6 +123,7 @@ FONT_SIZE_HINT: Final[int] = 10
 # COLOR PALETTE (RGB tuples)
 # ==============================================================================
 
+# Hacker Theme Colors
 COLOR_BLACK: Final[tuple[int, int, int]] = (0, 0, 0)
 COLOR_WHITE: Final[tuple[int, int, int]] = (255, 255, 255)
 COLOR_GREEN: Final[tuple[int, int, int]] = (0, 255, 0)
@@ -134,6 +135,18 @@ COLOR_YELLOW: Final[tuple[int, int, int]] = (255, 255, 0)
 COLOR_GRAY: Final[tuple[int, int, int]] = (128, 128, 128)
 COLOR_DARK_GRAY: Final[tuple[int, int, int]] = (32, 32, 32)
 COLOR_LIGHT_GRAY: Final[tuple[int, int, int]] = (192, 192, 192)
+
+# Modern Theme Colors
+COLOR_PRIMARY: Final[tuple[int, int, int]] = (0, 122, 255)
+COLOR_SECONDARY: Final[tuple[int, int, int]] = (100, 100, 100)
+COLOR_SUCCESS: Final[tuple[int, int, int]] = (40, 167, 69)
+COLOR_DANGER: Final[tuple[int, int, int]] = (220, 53, 69)
+COLOR_WARNING: Final[tuple[int, int, int]] = (255, 193, 7)
+COLOR_INFO: Final[tuple[int, int, int]] = (23, 162, 184)
+COLOR_BACKGROUND: Final[tuple[int, int, int]] = (30, 30, 30)
+COLOR_SURFACE: Final[tuple[int, int, int]] = (45, 45, 45)
+COLOR_TEXT: Final[tuple[int, int, int]] = (220, 220, 220)
+COLOR_MUTED: Final[tuple[int, int, int]] = (150, 150, 150)
 
 # ==============================================================================
 # BITCOIN CONFIGURATION

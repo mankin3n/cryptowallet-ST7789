@@ -9,6 +9,7 @@ import logging
 from typing import Optional
 from PIL import Image, ImageDraw
 import qrcode
+import math
 import config
 from ui.themes import Theme
 
@@ -84,7 +85,7 @@ def draw_header(
     title: str
 ) -> None:
     """
-    Draw page header bar.
+    Draw a modern page header bar.
 
     Args:
         draw: ImageDraw object
@@ -94,16 +95,23 @@ def draw_header(
     # Draw header background
     draw.rectangle(
         [(0, 0), (config.DISPLAY_WIDTH, config.HEADER_HEIGHT)],
-        fill=theme.get_color('DARK_GRAY'),
-        outline=theme.get_color('LIGHT_GRAY')
+        fill=theme.get_color('SURFACE'),
     )
 
     # Draw title
+    font_header = theme.get_font('header')
+    text_width, _ = draw.textsize(title, font=font_header)
     draw.text(
-        (config.MARGIN_SIDE, config.MARGIN_TOP + 5),
+        ((config.DISPLAY_WIDTH - text_width) / 2, (config.HEADER_HEIGHT - 20) / 2),
         title,
-        font=theme.get_font('header'),
-        fill=theme.get_color('WHITE')
+        font=font_header,
+        fill=theme.get_color('TEXT')
+    )
+
+    # Draw bottom border
+    draw.line(
+        [(0, config.HEADER_HEIGHT - 1), (config.DISPLAY_WIDTH, config.HEADER_HEIGHT - 1)],
+        fill=theme.get_color('SECONDARY')
     )
 
 
@@ -115,7 +123,7 @@ def draw_status_bar(
     hint: str = ""
 ) -> None:
     """
-    Draw status bar at bottom of screen.
+    Draw a modern status bar at the bottom of the screen.
 
     Args:
         draw: ImageDraw object
@@ -129,34 +137,45 @@ def draw_status_bar(
     # Draw background
     draw.rectangle(
         [(0, y_start), (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT)],
-        fill=theme.get_color('DARK_GRAY'),
-        outline=theme.get_color('LIGHT_GRAY')
+        fill=theme.get_color('SURFACE'),
     )
 
+    # Draw top border
+    draw.line(
+        [(0, y_start), (config.DISPLAY_WIDTH, y_start)],
+        fill=theme.get_color('SECONDARY')
+    )
+
+    y_text = y_start + (config.STATUS_BAR_HEIGHT - 12) / 2
+
     # Battery indicator
-    battery_text = f"🔋{battery}%"
+    battery_text = f"BAT: {battery}%"
     draw.text(
-        (config.MARGIN_SIDE, y_start + 8),
+        (config.MARGIN_SIDE, y_text),
         battery_text,
         font=theme.get_font('status'),
-        fill=theme.get_color('WHITE')
+        fill=theme.get_color('MUTED')
     )
 
     # Time
+    font_status = theme.get_font('status')
+    text_width, _ = draw.textsize(time_str, font=font_status)
     draw.text(
-        (config.DISPLAY_WIDTH // 2 - 20, y_start + 8),
+        ((config.DISPLAY_WIDTH - text_width) / 2, y_text),
         time_str,
-        font=theme.get_font('status'),
-        fill=theme.get_color('WHITE')
+        font=font_status,
+        fill=theme.get_color('MUTED')
     )
 
     # Hint text
     if hint:
+        font_hint = theme.get_font('hint')
+        text_width, _ = draw.textsize(hint, font=font_hint)
         draw.text(
-            (config.DISPLAY_WIDTH - 150, y_start + 8),
+            (config.DISPLAY_WIDTH - config.MARGIN_SIDE - text_width, y_text),
             hint,
-            font=theme.get_font('hint'),
-            fill=theme.get_color('GRAY')
+            font=font_hint,
+            fill=theme.get_color('MUTED')
         )
 
 
@@ -211,16 +230,20 @@ def draw_button(
     theme: Theme,
     text: str,
     position: tuple[int, int],
+    width: int = 0,
+    height: int = 0,
     selected: bool = False
 ) -> tuple[int, int, int, int]:
     """
-    Draw a button.
+    Draw a modern button.
 
     Args:
         draw: ImageDraw object
         theme: Theme instance
         text: Button text
         position: (x, y) position
+        width: Button width
+        height: Button height
         selected: Whether button is selected
 
     Returns:
@@ -229,32 +252,36 @@ def draw_button(
     x, y = position
     padding = 10
 
-    # Calculate size
-    bbox = draw.textbbox((0, 0), text, font=theme.get_font('body'))
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-
-    button_width = text_width + (2 * padding)
-    button_height = text_height + (2 * padding)
+    # Calculate size if not provided
+    if not width or not height:
+        bbox = draw.textbbox((0, 0), text, font=theme.get_font('body'))
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        width = text_width + (2 * padding)
+        height = text_height + (2 * padding)
 
     # Draw button background
-    bg_color = theme.get_color('GREEN') if selected else theme.get_color('DARK_GRAY')
+    bg_color = theme.get_color('PRIMARY') if selected else theme.get_color('SURFACE')
     draw.rectangle(
-        [(x, y), (x + button_width, y + button_height)],
+        [(x, y), (x + width, y + height)],
         fill=bg_color,
-        outline=theme.get_color('LIGHT_GRAY')
+        outline=theme.get_color('SECONDARY')
     )
 
     # Draw text
-    text_color = theme.get_color('BLACK') if selected else theme.get_color('WHITE')
+    font_body = theme.get_font('body')
+    text_width, text_height = draw.textsize(text, font=font_body)
+    text_x = x + (width - text_width) / 2
+    text_y = y + (height - text_height) / 2
+    text_color = theme.get_color('WHITE') if selected else theme.get_color('TEXT')
     draw.text(
-        (x + padding, y + padding),
+        (text_x, text_y),
         text,
-        font=theme.get_font('body'),
+        font=font_body,
         fill=text_color
     )
 
-    return (x, y, x + button_width, y + button_height)
+    return (x, y, x + width, y + height)
 
 
 def draw_slider(
@@ -267,7 +294,7 @@ def draw_slider(
     width: int = 200
 ) -> None:
     """
-    Draw a slider widget.
+    Draw a modern slider widget.
 
     Args:
         draw: ImageDraw object
@@ -279,32 +306,30 @@ def draw_slider(
         width: Slider width in pixels
     """
     x, y = position
-    height = 20
+    height = 10
+    handle_radius = 8
 
     # Draw track
     draw.rectangle(
-        [(x, y), (x + width, y + height)],
-        fill=theme.get_color('DARK_GRAY'),
-        outline=theme.get_color('LIGHT_GRAY')
+        [(x, y + height / 2 - 2), (x + width, y + height / 2 + 2)],
+        fill=theme.get_color('SECONDARY')
     )
 
-    # Calculate fill width
+    # Calculate handle position
     percentage = (value - min_val) / (max_val - min_val)
-    fill_width = int(width * percentage)
+    handle_x = x + int(width * percentage)
 
     # Draw fill
     draw.rectangle(
-        [(x, y), (x + fill_width, y + height)],
-        fill=theme.get_color('GREEN')
+        [(x, y + height / 2 - 2), (handle_x, y + height / 2 + 2)],
+        fill=theme.get_color('PRIMARY')
     )
 
-    # Draw value text
-    value_text = f"{value}"
-    draw.text(
-        (x + width + 10, y + 2),
-        value_text,
-        font=theme.get_font('body'),
-        fill=theme.get_color('WHITE')
+    # Draw handle
+    draw.ellipse(
+        [(handle_x - handle_radius, y + height / 2 - handle_radius), (handle_x + handle_radius, y + height / 2 + handle_radius)],
+        fill=theme.get_color('PRIMARY'),
+        outline=theme.get_color('WHITE')
     )
 
 
@@ -316,7 +341,7 @@ def draw_progress_bar(
     width: int = 280
 ) -> None:
     """
-    Draw a progress bar.
+    Draw a modern progress bar.
 
     Args:
         draw: ImageDraw object
@@ -326,29 +351,31 @@ def draw_progress_bar(
         width: Bar width in pixels
     """
     x, y = position
-    height = 20
+    height = 10
 
     # Draw background
     draw.rectangle(
         [(x, y), (x + width, y + height)],
-        fill=theme.get_color('DARK_GRAY'),
-        outline=theme.get_color('LIGHT_GRAY')
+        fill=theme.get_color('SECONDARY'),
+        outline=theme.get_color('SECONDARY')
     )
 
     # Draw progress
     fill_width = int(width * max(0.0, min(1.0, progress)))
     draw.rectangle(
         [(x, y), (x + fill_width, y + height)],
-        fill=theme.get_color('CYAN')
+        fill=theme.get_color('PRIMARY')
     )
 
     # Draw percentage
     percent_text = f"{int(progress * 100)}%"
+    font_hint = theme.get_font('hint')
+    text_width, _ = draw.textsize(percent_text, font=font_hint)
     draw.text(
-        (x + width // 2 - 15, y + 2),
+        (x + width + 10, y),
         percent_text,
-        font=theme.get_font('body'),
-        fill=theme.get_color('WHITE')
+        font=font_hint,
+        fill=theme.get_color('MUTED')
     )
 
 
@@ -356,46 +383,58 @@ def draw_spinner(
     draw: ImageDraw.Draw,
     theme: Theme,
     position: tuple[int, int],
+    radius: int = 10,
     frame: int = 0
 ) -> None:
     """
-    Draw an animated spinner.
+    Draw a modern animated spinner.
 
     Args:
         draw: ImageDraw object
         theme: Theme instance
         position: (x, y) center position
-        frame: Animation frame (0-7)
+        radius: Spinner radius
+        frame: Animation frame
     """
     x, y = position
-    radius = 20
-    segments = 8
+    segments = 12
 
     for i in range(segments):
-        angle = (i * 360 / segments) + (frame * 45)
-        opacity = 255 - (i * 30)
-
-        # Calculate segment position
-        import math
+        angle = (i * 360 / segments) + (frame * 30)
         rad = math.radians(angle)
-        seg_x = x + int(radius * math.cos(rad))
-        seg_y = y + int(radius * math.sin(rad))
+        
+        # Calculate opacity
+        opacity = int(255 * (1 - (i / segments)))
+        color = theme.get_color('PRIMARY')
+        
+        # Create a new color with opacity
+        final_color = (color[0], color[1], color[2], opacity)
 
         # Draw segment
-        color = (opacity, opacity, opacity)
-        draw.ellipse(
-            [(seg_x - 3, seg_y - 3), (seg_x + 3, seg_y + 3)],
-            fill=color
+        seg_x = x + int(radius * math.cos(rad))
+        seg_y = y + int(radius * math.sin(rad))
+        
+        # Use a small rectangle for each segment to simulate thickness
+        draw.rectangle(
+            [(seg_x - 1, seg_y - 3), (seg_x + 1, seg_y + 3)],
+            fill=final_color
         )
 
 
-def create_qr_code(data: str, size: int = config.QR_MAX_SIZE) -> Image.Image:
+def create_qr_code(
+    data: str,
+    size: int = config.QR_MAX_SIZE,
+    fill_color: str = "black",
+    back_color: str = "white"
+) -> Image.Image:
     """
     Create QR code image.
 
     Args:
         data: Data to encode
         size: Desired QR code size in pixels
+        fill_color: QR code color
+        back_color: Background color
 
     Returns:
         PIL Image of QR code
@@ -411,7 +450,7 @@ def create_qr_code(data: str, size: int = config.QR_MAX_SIZE) -> Image.Image:
         qr.make(fit=True)
 
         # Create image
-        qr_image = qr.make_image(fill_color="black", back_color="white")
+        qr_image = qr.make_image(fill_color=fill_color, back_color=back_color)
 
         # Resize to target size
         qr_image = qr_image.resize((size, size), Image.Resampling.NEAREST)
