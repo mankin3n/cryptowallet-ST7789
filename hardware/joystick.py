@@ -4,10 +4,11 @@ Button Input Handler.
 Reads button states from GPIO pins and maps to directional inputs.
 Provides debouncing and event queue for input processing.
 
-Hardware: 3 tactile push buttons
+Hardware: 4 tactile push buttons
 - UP button: GPIO 17 (BOARD Pin 11)
 - DOWN button: GPIO 22 (BOARD Pin 15)
 - SELECT button: GPIO 23 (BOARD Pin 16)
+- BACK button: GPIO 27 (BOARD Pin 13)
 - Wiring: Connect one side of button to GPIO pin, other side to GND
 - Internal pull-up resistors enabled (buttons are active LOW)
 """
@@ -36,7 +37,7 @@ class JoystickEvent:
     Represents a button input event.
 
     Attributes:
-        direction: Input direction (UP/DOWN/PRESS/NONE)
+        direction: Input direction (UP/DOWN/LEFT/PRESS/NONE)
         timestamp: Event timestamp
     """
 
@@ -76,7 +77,8 @@ class Joystick:
         self.last_button_times: dict[int, float] = {
             config.BUTTON_UP_PIN: 0.0,
             config.BUTTON_DOWN_PIN: 0.0,
-            config.BUTTON_SELECT_PIN: 0.0
+            config.BUTTON_SELECT_PIN: 0.0,
+            config.BUTTON_BACK_PIN: 0.0
         }
         self.is_available: bool = False
 
@@ -102,12 +104,14 @@ class Joystick:
                 GPIO.setup(config.BUTTON_UP_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                 GPIO.setup(config.BUTTON_DOWN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                 GPIO.setup(config.BUTTON_SELECT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+                GPIO.setup(config.BUTTON_BACK_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
                 self.is_available = True
                 logger.info("✓ Button inputs configured:")
                 logger.info(f"  - UP: GPIO {config.BUTTON_UP_PIN}")
                 logger.info(f"  - DOWN: GPIO {config.BUTTON_DOWN_PIN}")
                 logger.info(f"  - SELECT: GPIO {config.BUTTON_SELECT_PIN}")
+                logger.info(f"  - BACK: GPIO {config.BUTTON_BACK_PIN}")
             except Exception as e:
                 self.is_available = False
                 logger.warning(f"Button GPIO setup failed: {e}")
@@ -175,6 +179,12 @@ class Joystick:
                     if (current_time - self.last_button_times[config.BUTTON_SELECT_PIN]) > (config.BUTTON_DEBOUNCE_MS / 1000.0):
                         self.event_queue.put(JoystickEvent(config.INPUT_PRESS))
                         self.last_button_times[config.BUTTON_SELECT_PIN] = current_time
+
+                # Check BACK button
+                if self._read_button(config.BUTTON_BACK_PIN):
+                    if (current_time - self.last_button_times[config.BUTTON_BACK_PIN]) > (config.BUTTON_DEBOUNCE_MS / 1000.0):
+                        self.event_queue.put(JoystickEvent(config.INPUT_LEFT))
+                        self.last_button_times[config.BUTTON_BACK_PIN] = current_time
 
                 time.sleep(poll_interval)
 

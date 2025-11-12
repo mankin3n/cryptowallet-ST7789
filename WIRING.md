@@ -8,11 +8,11 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
 |-----------|---------------|-------|
 | Raspberry Pi 4B | Any RAM variant | 1GB+ recommended |
 | ST7789 TFT Display | 320x240 pixels, SPI interface | 2.4" or 2.8" modules |
-| Tactile Push Buttons (3x) | 6mm momentary switches | UP, DOWN, SELECT |
+| Tactile Push Buttons (4x) | 6mm momentary switches | UP, DOWN, SELECT, BACK |
 | Raspberry Pi Camera Module | v2 (8MP) or v3 (12MP) | CSI interface (optional) |
 | Camera Cable | 15-pin ribbon cable | Length as needed (optional) |
 | Breadboard | Half-size or larger | For prototyping |
-| Jumper Wires | Male-to-Female | ~15 wires needed |
+| Jumper Wires | Male-to-Female | ~20 wires needed |
 | Power Supply | 5V 3A USB-C | Official RPi power supply recommended |
 
 ## Component Overview
@@ -25,7 +25,7 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
 
 ### Tactile Push Buttons (GPIO)
 - **Interface**: Digital GPIO pins with internal pull-up resistors
-- **Count**: 3 buttons (UP, DOWN, SELECT)
+- **Count**: 4 buttons (UP, DOWN, SELECT, BACK)
 - **Type**: Momentary push buttons (normally open)
 - **Active**: LOW (button press connects GPIO to GND)
 - **Power**: No external power needed (uses internal pull-ups)
@@ -45,17 +45,17 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
    GPIO3  (5) (6)  GND      │   USB x2    │
    GPIO4  (7) (8)  GPIO14   │   Ethernet  │
      GND  (9) (10) GPIO15   └─────────────┘
-  GPIO17 (11) (12) GPIO18
-  GPIO27 (13) (14) GND
-  GPIO22 (15) (16) GPIO23 ◄── SELECT Button
-     3V3 (17) (18) GPIO24 ◄── ST7789 DC
+  GPIO17 (11) (12) GPIO18   ◄── UP Button
+  GPIO27 (13) (14) GND      ◄── BACK Button
+  GPIO22 (15) (16) GPIO23   ◄── DOWN Button  │  SELECT Button
+     3V3 (17) (18) GPIO24   ◄── ST7789 DC
   GPIO10 (19) (20) GND
-   GPIO9 (21) (22) GPIO25 ◄── ST7789 RST
-  GPIO11 (23) (24) GPIO8  ◄── ST7789 CS
+   GPIO9 (21) (22) GPIO25   ◄── ST7789 RST
+  GPIO11 (23) (24) GPIO8    ◄── ST7789 CS
      GND (25) (26) GPIO7
    GPIO0 (27) (28) GPIO1
    GPIO5 (29) (30) GND
-   GPIO6 (31) (32) GPIO12 ◄── ST7789 BL
+   GPIO6 (31) (32) GPIO12   ◄── ST7789 BL
   GPIO13 (33) (34) GND
   GPIO19 (35) (36) GPIO16
   GPIO26 (37) (38) GPIO20
@@ -66,6 +66,7 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
 - GPIO 17 (pin 11): UP button
 - GPIO 22 (pin 15): DOWN button
 - GPIO 23 (pin 16): SELECT button
+- GPIO 27 (pin 13): BACK button
 
 **SPI0 Pins** (ST7789 Display):
 - GPIO 10 (pin 19): MOSI
@@ -131,17 +132,19 @@ ST7789 Display              Raspberry Pi 4B
 | UP | GPIO 17 | Pin 11 | One side to GPIO 17, other side to GND |
 | DOWN | GPIO 22 | Pin 15 | One side to GPIO 22, other side to GND |
 | SELECT | GPIO 23 | Pin 16 | One side to GPIO 23, other side to GND |
+| BACK | GPIO 27 | Pin 13 | One side to GPIO 27, other side to GND |
 
 **Connection Steps:**
 
 1. **Power down** the Raspberry Pi
-2. Place all three buttons on breadboard
+2. Place all four buttons on breadboard
 3. Connect ground rail: Run jumper from any RPi GND pin (e.g., pin 9, 14, or 39) to breadboard ground rail
 4. Connect one side of each button to the ground rail on breadboard
 5. Connect other sides of buttons to their respective GPIO pins:
    - UP button → GPIO 17 (pin 11)
    - DOWN button → GPIO 22 (pin 15)
    - SELECT button → GPIO 23 (pin 16)
+   - BACK button → GPIO 27 (pin 13)
 
 **Notes:**
 - **No resistors needed**: Internal pull-up resistors are enabled in software
@@ -159,6 +162,8 @@ Buttons                    Raspberry Pi 4B
 │  DOWN   ────┼───┼────────┤ Pin 15 (GP22)│
 │         ────┼───┤        │              │
 │  SELECT ────┼───┼────────┤ Pin 16 (GP23)│
+│         ────┼───┤        │              │
+│  BACK   ────┼───┼────────┤ Pin 13 (GP27)│
 │         ────┼───┤        │              │
 │             │   │        │              │
 │             │   └────────┤ Pin 9 (GND)  │
@@ -178,6 +183,10 @@ GPIO 22 ──┬── [Button] ── GND     (DOWN)
          3.3V (via internal pull-up)
 
 GPIO 23 ──┬── [Button] ── GND     (SELECT)
+          │
+         3.3V (via internal pull-up)
+
+GPIO 27 ──┬── [Button] ── GND     (BACK)
           │
          3.3V (via internal pull-up)
 ```

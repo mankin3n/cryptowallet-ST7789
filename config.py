@@ -28,10 +28,11 @@ ST7789_CS_PIN: Final[int] = 8       # Chip Select (BOARD Pin 24)
 ST7789_MOSI_PIN: Final[int] = 10    # SPI0 MOSI (BOARD Pin 19)
 ST7789_SCLK_PIN: Final[int] = 11    # SPI0 Clock (BOARD Pin 23)
 
-# Button Input (3 tactile switches)
+# Button Input (4 tactile switches)
 BUTTON_UP_PIN: Final[int] = 17      # UP button (BOARD Pin 11)
 BUTTON_DOWN_PIN: Final[int] = 22    # DOWN button (BOARD Pin 15)
 BUTTON_SELECT_PIN: Final[int] = 23  # SELECT button (BOARD Pin 16)
+BUTTON_BACK_PIN: Final[int] = 27    # BACK button (BOARD Pin 13)
 
 # ==============================================================================
 # SPI CONFIGURATION
@@ -65,7 +66,7 @@ PADDING: Final[int] = 5
 # BUTTON INPUT CONFIGURATION
 # ==============================================================================
 
-# 3-button navigation (UP, DOWN, SELECT)
+# 4-button navigation (UP, DOWN, SELECT, BACK)
 # Buttons connected between GPIO pin and GND (using internal pull-up resistors)
 # Active LOW (button press = LOW, released = HIGH)
 

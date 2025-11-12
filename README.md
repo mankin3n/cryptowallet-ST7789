@@ -18,10 +18,11 @@ Hardware security device for Raspberry Pi 4B with ST7789 320x240 TFT display, 3-
 - **ST7789 TFT Display** (320x240 pixels)
   - Connected via SPI0
   - GPIO pins: DC=24, RST=25, BL=12, CS=8
-- **3 Tactile Push Buttons** for navigation
+- **4 Tactile Push Buttons** for navigation
   - UP button: GPIO 17 (BOARD Pin 11)
   - DOWN button: GPIO 22 (BOARD Pin 15)
   - SELECT button: GPIO 23 (BOARD Pin 16)
+  - BACK button: GPIO 27 (BOARD Pin 13)
   - Wiring: Connect one side to GPIO, other side to GND
   - Uses internal pull-up resistors (no external resistors needed)
 - **Raspberry Pi Camera Module** v2 or v3 (optional)
@@ -98,8 +99,7 @@ pytest tests/ -v
 - **UP**: Navigate up in menus, scroll up
 - **DOWN**: Navigate down in menus, scroll down
 - **SELECT**: Select item, confirm action, enter submenu
-
-Note: Navigation is forward-only. Return to home menu to access other sections.
+- **BACK**: Go back to previous page/menu
 
 ### Keyboard/CLI Controls (Alternative)
 
@@ -107,6 +107,7 @@ The application also supports keyboard input via the terminal (works in parallel
 
 - **Arrow Up / W / 8**: Navigate up
 - **Arrow Down / S / 2**: Navigate down
+- **Arrow Left / A / 4**: Go back
 - **Enter / Space / 5**: Select/confirm
 - **Q**: Quit application
 
