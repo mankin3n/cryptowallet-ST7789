@@ -1,9 +1,15 @@
 """
-HW-504 Joystick Input Handler.
+Button Input Handler.
 
-Reads analog joystick position via MCP3008 ADC and button via GPIO.
-Maps analog values to directional inputs (UP/DOWN/LEFT/RIGHT).
+Reads button states from GPIO pins and maps to directional inputs.
 Provides debouncing and event queue for input processing.
+
+Hardware: 3 tactile push buttons
+- UP button: GPIO 17 (BOARD Pin 11)
+- DOWN button: GPIO 22 (BOARD Pin 15)
+- SELECT button: GPIO 23 (BOARD Pin 16)
+- Wiring: Connect one side of button to GPIO pin, other side to GND
+- Internal pull-up resistors enabled (buttons are active LOW)
 """
 
 import logging
@@ -12,23 +18,31 @@ import threading
 from queue import Queue
 from typing import Optional
 import config
-from hardware.gpio_manager import get_gpio_manager
 
 logger = logging.getLogger(__name__)
+
+# Try to import GPIO library
+_BUTTON_MOCK_MODE = config.MOCK_HARDWARE
+if not config.MOCK_HARDWARE:
+    try:
+        import RPi.GPIO as GPIO
+    except ImportError:
+        logging.warning("RPi.GPIO not available, buttons will be disabled")
+        _BUTTON_MOCK_MODE = True
 
 
 class JoystickEvent:
     """
-    Represents a joystick input event.
+    Represents a button input event.
 
     Attributes:
-        direction: Input direction (UP/DOWN/LEFT/RIGHT/PRESS/NONE)
+        direction: Input direction (UP/DOWN/PRESS/NONE)
         timestamp: Event timestamp
     """
 
     def __init__(self, direction: str) -> None:
         """
-        Create joystick event.
+        Create button event.
 
         Args:
             direction: Input direction constant from config
@@ -42,131 +56,135 @@ class JoystickEvent:
 
 class Joystick:
     """
-    HW-504 joystick controller with MCP3008 ADC.
+    Button input controller.
+
+    Reads 3 tactile buttons via GPIO pins with internal pull-up resistors.
+    Buttons are active LOW (pressed = LOW, released = HIGH).
 
     Attributes:
-        gpio: GPIO manager instance
-        event_queue: Queue of joystick events
+        event_queue: Queue of button events
         running: Whether polling thread is running
-        last_button_time: Timestamp of last button press (for debouncing)
-        last_direction: Last detected direction (for debouncing)
+        last_button_times: Dictionary tracking last press time for each button
+        is_available: Whether button GPIO is available
     """
 
     def __init__(self) -> None:
-        """Initialize joystick controller."""
-        self.gpio = get_gpio_manager()
+        """Initialize button controller."""
         self.event_queue: Queue[JoystickEvent] = Queue()
         self.running: bool = False
         self.poll_thread: Optional[threading.Thread] = None
-        self.last_button_time: float = 0.0
-        self.last_direction: str = config.INPUT_NONE
-        self.last_direction_time: float = 0.0
+        self.last_button_times: dict[int, float] = {
+            config.BUTTON_UP_PIN: 0.0,
+            config.BUTTON_DOWN_PIN: 0.0,
+            config.BUTTON_SELECT_PIN: 0.0
+        }
         self.is_available: bool = False
 
-        logger.info("Joystick controller created")
+        logger.info("Button input controller created")
 
     def start(self) -> None:
-        """Start joystick polling thread."""
+        """Start button polling thread."""
         if self.running:
-            logger.warning("Joystick already running")
+            logger.warning("Button polling already running")
             return
 
-        # Check if ADC SPI is available
-        if hasattr(self.gpio, 'adc_spi') and self.gpio.adc_spi is not None:
-            self.is_available = True
-            logger.info("✓ Joystick ADC (MCP3008) detected")
-        else:
+        # Setup GPIO pins for buttons
+        if _BUTTON_MOCK_MODE:
             self.is_available = False
-            logger.info("  Joystick ADC not available - input disabled")
-            logger.info("  → Check MCP3008 wiring and SPI1 enabled")
+            logger.info("  Buttons in mock mode (RPi.GPIO not available)")
+            logger.info("  → Install with: pip install RPi.GPIO")
+        else:
+            try:
+                logger.info("Attempting to initialize button inputs...")
+
+                # GPIO should already be set to BCM mode by gpio_manager
+                # Setup button pins as inputs with pull-up resistors
+                GPIO.setup(config.BUTTON_UP_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+                GPIO.setup(config.BUTTON_DOWN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+                GPIO.setup(config.BUTTON_SELECT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+                self.is_available = True
+                logger.info("✓ Button inputs configured:")
+                logger.info(f"  - UP: GPIO {config.BUTTON_UP_PIN}")
+                logger.info(f"  - DOWN: GPIO {config.BUTTON_DOWN_PIN}")
+                logger.info(f"  - SELECT: GPIO {config.BUTTON_SELECT_PIN}")
+            except Exception as e:
+                self.is_available = False
+                logger.warning(f"Button GPIO setup failed: {e}")
+                logger.info("  → Check GPIO permissions and wiring")
 
         self.running = True
         self.poll_thread = threading.Thread(target=self._poll_loop, daemon=True)
         self.poll_thread.start()
-        logger.info("Joystick polling started")
+        logger.info("Button polling started")
 
     def stop(self) -> None:
-        """Stop joystick polling thread."""
+        """Stop button polling thread."""
         self.running = False
         if self.poll_thread:
             self.poll_thread.join(timeout=1.0)
-        logger.info("Joystick polling stopped")
+        logger.info("Button polling stopped")
+
+    def _read_button(self, pin: int) -> bool:
+        """
+        Read button state from GPIO pin.
+
+        Args:
+            pin: GPIO pin number
+
+        Returns:
+            True if button pressed, False otherwise
+        """
+        if not self.is_available:
+            return False
+
+        try:
+            # Button is active LOW (pressed = 0, released = 1)
+            return GPIO.input(pin) == GPIO.LOW
+        except Exception as e:
+            logger.debug(f"Button read error on GPIO {pin}: {e}")
+            return False
 
     def _poll_loop(self) -> None:
         """Main polling loop (runs in background thread)."""
-        poll_interval = 1.0 / config.JOYSTICK_POLL_RATE
+        poll_interval = 1.0 / config.BUTTON_POLL_RATE
 
         while self.running:
             try:
-                # Read analog positions
-                x_value = self.gpio.read_adc(config.JOYSTICK_X_CHANNEL)
-                y_value = self.gpio.read_adc(config.JOYSTICK_Y_CHANNEL)
+                if not self.is_available:
+                    # Just sleep if buttons not available
+                    time.sleep(poll_interval)
+                    continue
 
-                # Map to direction
-                direction = self._map_direction(x_value, y_value)
-
-                # Check for direction change with debouncing
                 current_time = time.time()
-                if direction != config.INPUT_NONE:
-                    if direction != self.last_direction or (current_time - self.last_direction_time) > 0.2:
-                        self.event_queue.put(JoystickEvent(direction))
-                        self.last_direction = direction
-                        self.last_direction_time = current_time
-                else:
-                    self.last_direction = config.INPUT_NONE
 
-                # Read button
-                button_pressed = self.gpio.read_button()
-                if button_pressed:
-                    # Debounce button
-                    if (current_time - self.last_button_time) > (config.JOYSTICK_DEBOUNCE_MS / 1000.0):
+                # Check UP button
+                if self._read_button(config.BUTTON_UP_PIN):
+                    if (current_time - self.last_button_times[config.BUTTON_UP_PIN]) > (config.BUTTON_DEBOUNCE_MS / 1000.0):
+                        self.event_queue.put(JoystickEvent(config.INPUT_UP))
+                        self.last_button_times[config.BUTTON_UP_PIN] = current_time
+
+                # Check DOWN button
+                if self._read_button(config.BUTTON_DOWN_PIN):
+                    if (current_time - self.last_button_times[config.BUTTON_DOWN_PIN]) > (config.BUTTON_DEBOUNCE_MS / 1000.0):
+                        self.event_queue.put(JoystickEvent(config.INPUT_DOWN))
+                        self.last_button_times[config.BUTTON_DOWN_PIN] = current_time
+
+                # Check SELECT button
+                if self._read_button(config.BUTTON_SELECT_PIN):
+                    if (current_time - self.last_button_times[config.BUTTON_SELECT_PIN]) > (config.BUTTON_DEBOUNCE_MS / 1000.0):
                         self.event_queue.put(JoystickEvent(config.INPUT_PRESS))
-                        self.last_button_time = current_time
+                        self.last_button_times[config.BUTTON_SELECT_PIN] = current_time
 
                 time.sleep(poll_interval)
 
             except Exception as e:
-                logger.error(f"Joystick polling error: {e}")
+                logger.error(f"Button polling error: {e}")
                 time.sleep(poll_interval)
-
-    def _map_direction(self, x: int, y: int) -> str:
-        """
-        Map analog X/Y values to direction.
-
-        Args:
-            x: X-axis ADC value (0-1023)
-            y: Y-axis ADC value (0-1023)
-
-        Returns:
-            Direction constant (UP/DOWN/LEFT/RIGHT/NONE)
-        """
-        # Calculate deltas from center
-        dx = x - config.JOYSTICK_CENTER
-        dy = y - config.JOYSTICK_CENTER
-
-        # Check if within deadzone
-        if abs(dx) < config.JOYSTICK_DEADZONE and abs(dy) < config.JOYSTICK_DEADZONE:
-            return config.INPUT_NONE
-
-        # Determine primary direction (prefer vertical over horizontal)
-        if abs(dy) > abs(dx):
-            # Vertical movement
-            if dy > config.JOYSTICK_THRESHOLD:
-                return config.INPUT_DOWN  # Y increases downward
-            elif dy < -config.JOYSTICK_THRESHOLD:
-                return config.INPUT_UP
-        else:
-            # Horizontal movement
-            if dx > config.JOYSTICK_THRESHOLD:
-                return config.INPUT_RIGHT  # X increases rightward
-            elif dx < -config.JOYSTICK_THRESHOLD:
-                return config.INPUT_LEFT
-
-        return config.INPUT_NONE
 
     def get_event(self) -> Optional[JoystickEvent]:
         """
-        Get next joystick event from queue.
+        Get next button event from queue.
 
         Returns:
             JoystickEvent or None if queue empty
@@ -187,10 +205,10 @@ _joystick: Optional[Joystick] = None
 
 def get_joystick() -> Joystick:
     """
-    Get singleton joystick instance.
+    Get singleton button input instance.
 
     Returns:
-        Joystick instance
+        Joystick (button input) instance
     """
     global _joystick
     if _joystick is None:

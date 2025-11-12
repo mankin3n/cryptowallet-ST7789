@@ -4,8 +4,9 @@ SeedSigner Mini - Hardware Security Device
 Main Application Entry Point
 
 Hardware security device for Raspberry Pi 4B with ST7789 320x240 display,
-HW-504 joystick input, and camera module. Provides Bitcoin address generation,
-transaction signing, QR code generation/scanning, and air-gapped wallet functionality.
+3-button navigation, and camera module. Provides Bitcoin address
+generation, transaction signing, QR code generation/scanning, and air-gapped
+wallet functionality.
 
 Usage:
     python main.py                  # Run on Raspberry Pi with hardware

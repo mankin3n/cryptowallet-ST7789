@@ -8,12 +8,11 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
 |-----------|---------------|-------|
 | Raspberry Pi 4B | Any RAM variant | 1GB+ recommended |
 | ST7789 TFT Display | 320x240 pixels, SPI interface | 2.4" or 2.8" modules |
-| HW-504 Joystick Module | 5-axis analog joystick | With center button |
-| MCP3008 ADC | 8-channel 10-bit ADC, SPI interface | For joystick analog input |
-| Raspberry Pi Camera Module | v2 (8MP) or v3 (12MP) | CSI interface |
-| Camera Cable | 15-pin ribbon cable | Length as needed |
+| Tactile Push Buttons (3x) | 6mm momentary switches | UP, DOWN, SELECT |
+| Raspberry Pi Camera Module | v2 (8MP) or v3 (12MP) | CSI interface (optional) |
+| Camera Cable | 15-pin ribbon cable | Length as needed (optional) |
 | Breadboard | Half-size or larger | For prototyping |
-| Jumper Wires | Male-to-Female | ~25 wires needed |
+| Jumper Wires | Male-to-Female | ~15 wires needed |
 | Power Supply | 5V 3A USB-C | Official RPi power supply recommended |
 
 ## Component Overview
@@ -24,10 +23,12 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
 - **Clock Speed**: 80 MHz
 - **Power**: 3.3V logic, ~100mA typical
 
-### HW-504 Joystick + MCP3008 ADC (SPI1)
-- **Interface**: Analog (VRx/VRy) + Digital button
-- **ADC**: MCP3008 converts analog to SPI
-- **Power**: 3.3V or 5V for joystick, 3.3V for MCP3008
+### Tactile Push Buttons (GPIO)
+- **Interface**: Digital GPIO pins with internal pull-up resistors
+- **Count**: 3 buttons (UP, DOWN, SELECT)
+- **Type**: Momentary push buttons (normally open)
+- **Active**: LOW (button press connects GPIO to GND)
+- **Power**: No external power needed (uses internal pull-ups)
 
 ### Camera Module (CSI)
 - **Interface**: CSI (Camera Serial Interface)
@@ -46,7 +47,7 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
      GND  (9) (10) GPIO15   └─────────────┘
   GPIO17 (11) (12) GPIO18
   GPIO27 (13) (14) GND
-  GPIO22 (15) (16) GPIO23 ◄── Joystick Button
+  GPIO22 (15) (16) GPIO23 ◄── SELECT Button
      3V3 (17) (18) GPIO24 ◄── ST7789 DC
   GPIO10 (19) (20) GND
    GPIO9 (21) (22) GPIO25 ◄── ST7789 RST
@@ -56,22 +57,21 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
    GPIO5 (29) (30) GND
    GPIO6 (31) (32) GPIO12 ◄── ST7789 BL
   GPIO13 (33) (34) GND
-  GPIO19 (35) (36) GPIO16 ◄── MCP3008 CS
-  GPIO26 (37) (38) GPIO20 ◄── MCP3008 MOSI
-     GND (39) (40) GPIO21 ◄── MCP3008 CLK
+  GPIO19 (35) (36) GPIO16
+  GPIO26 (37) (38) GPIO20
+     GND (39) (40) GPIO21
 ```
+
+**Button Pins:**
+- GPIO 17 (pin 11): UP button
+- GPIO 22 (pin 15): DOWN button
+- GPIO 23 (pin 16): SELECT button
 
 **SPI0 Pins** (ST7789 Display):
 - GPIO 10 (pin 19): MOSI
 - GPIO 9 (pin 21): MISO (not used by display)
 - GPIO 11 (pin 23): SCLK
 - GPIO 8 (pin 24): CE0 (CS)
-
-**SPI1 Pins** (MCP3008 ADC):
-- GPIO 20 (pin 38): MOSI
-- GPIO 19 (pin 35): MISO
-- GPIO 21 (pin 40): SCLK
-- GPIO 16 (pin 36): CE0 (CS)
 
 ---
 
@@ -122,104 +122,69 @@ ST7789 Display              Raspberry Pi 4B
 
 ---
 
-### 2. MCP3008 ADC (SPI1)
+### 2. Tactile Push Buttons (GPIO)
 
 **Pin Connections:**
 
-| MCP3008 Pin | Pin # | RPi GPIO | RPi Pin | Signal |
-|-------------|-------|----------|---------|--------|
-| VDD | 16 | 3.3V | Pin 1 | Power |
-| VREF | 15 | 3.3V | Pin 1 | Reference voltage |
-| AGND | 14 | GND | Pin 6 | Analog ground |
-| CLK | 13 | GPIO 21 | Pin 40 | SPI1 SCLK |
-| DOUT | 12 | GPIO 19 | Pin 35 | SPI1 MISO |
-| DIN | 11 | GPIO 20 | Pin 38 | SPI1 MOSI |
-| CS/SHDN | 10 | GPIO 16 | Pin 36 | Chip select |
-| DGND | 9 | GND | Pin 6 | Digital ground |
-| CH0 | 1 | - | - | VRx (joystick X-axis) |
-| CH1 | 2 | - | - | VRy (joystick Y-axis) |
-| CH2-CH7 | 3-8 | - | - | Unused (future expansion) |
-
-**MCP3008 Pin Layout:**
-```
-        ┌────────┐
-   CH0 -│1    16│- VDD (3.3V)
-   CH1 -│2    15│- VREF (3.3V)
-   CH2 -│3    14│- AGND (GND)
-   CH3 -│4    13│- CLK (GPIO 21)
-   CH4 -│5    12│- DOUT (GPIO 19)
-   CH5 -│6    11│- DIN (GPIO 20)
-   CH6 -│7    10│- CS (GPIO 16)
-   CH7 -│8     9│- DGND (GND)
-        └────────┘
-```
+| Button | RPi GPIO | RPi Pin | Connection |
+|--------|----------|---------|------------|
+| UP | GPIO 17 | Pin 11 | One side to GPIO 17, other side to GND |
+| DOWN | GPIO 22 | Pin 15 | One side to GPIO 22, other side to GND |
+| SELECT | GPIO 23 | Pin 16 | One side to GPIO 23, other side to GND |
 
 **Connection Steps:**
-1. Insert MCP3008 into breadboard (straddle center gap)
-2. Connect pin 16 (VDD) to 3.3V (RPi pin 1)
-3. Connect pin 15 (VREF) to 3.3V (RPi pin 1)
-4. Connect pins 14 & 9 (AGND & DGND) to GND (RPi pin 6)
-5. Connect pin 13 (CLK) to GPIO 21 (RPi pin 40)
-6. Connect pin 12 (DOUT) to GPIO 19 (RPi pin 35)
-7. Connect pin 11 (DIN) to GPIO 20 (RPi pin 38)
-8. Connect pin 10 (CS) to GPIO 16 (RPi pin 36)
+
+1. **Power down** the Raspberry Pi
+2. Place all three buttons on breadboard
+3. Connect ground rail: Run jumper from any RPi GND pin (e.g., pin 9, 14, or 39) to breadboard ground rail
+4. Connect one side of each button to the ground rail on breadboard
+5. Connect other sides of buttons to their respective GPIO pins:
+   - UP button → GPIO 17 (pin 11)
+   - DOWN button → GPIO 22 (pin 15)
+   - SELECT button → GPIO 23 (pin 16)
+
+**Notes:**
+- **No resistors needed**: Internal pull-up resistors are enabled in software
+- **Active LOW**: Button press connects GPIO to GND (reads as LOW/0)
+- **Released state**: Internal pull-up makes GPIO read HIGH/1
+- Use normally-open (NO) momentary push buttons
 
 **Wiring Diagram:**
 ```
-MCP3008 ADC                 Raspberry Pi 4B
-┌─────────────┐             ┌──────────────┐
-│             │             │              │
-│  VDD    ────┼─────────────┤ Pin 1 (3.3V) │
-│  VREF   ────┼─────────────┤ Pin 1 (3.3V) │
-│  AGND   ────┼─────────────┤ Pin 6 (GND)  │
-│  CLK    ────┼─────────────┤ Pin 40 (GP21)│
-│  DOUT   ────┼─────────────┤ Pin 35 (GP19)│
-│  DIN    ────┼─────────────┤ Pin 38 (GP20)│
-│  CS     ────┼─────────────┤ Pin 36 (GP16)│
-│  DGND   ────┼─────────────┤ Pin 6 (GND)  │
-│             │             │              │
-└─────────────┘             └──────────────┘
-```
-
----
-
-### 3. HW-504 Joystick Module
-
-**Pin Connections:**
-
-| HW-504 Pin | Connection | Notes |
-|------------|------------|-------|
-| GND | GND (breadboard) | Common ground |
-| +5V | 5V (RPi pin 2) | Or 3.3V for lower voltage |
-| VRx | MCP3008 CH0 (pin 1) | X-axis analog output |
-| VRy | MCP3008 CH1 (pin 2) | Y-axis analog output |
-| SW | GPIO 23 (RPi pin 16) | Center button (active LOW) |
-
-**Connection Steps:**
-1. Connect joystick GND to breadboard ground rail
-2. Connect +5V to RPi 5V (pin 2) or 3.3V for reduced range
-3. Connect VRx to MCP3008 pin 1 (CH0)
-4. Connect VRy to MCP3008 pin 2 (CH1)
-5. Connect SW to GPIO 23 (RPi pin 16)
-6. **Optional**: Add 10kΩ pull-up resistor from SW to 3.3V (internal pull-up used in software)
-
-**Wiring Diagram:**
-```
-HW-504 Joystick            MCP3008 / RPi
+Buttons                    Raspberry Pi 4B
 ┌─────────────┐            ┌──────────────┐
 │             │            │              │
-│  GND    ────┼────────────┤ GND          │
-│  +5V    ────┼────────────┤ RPi Pin 2    │
-│  VRx    ────┼────────────┤ MCP3008 CH0  │
-│  VRy    ────┼────────────┤ MCP3008 CH1  │
-│  SW     ────┼────────────┤ GPIO 23      │
-│             │            │              │
+│  UP     ────┼────────────┤ Pin 11 (GP17)│
+│         ────┼───┐        │              │
+│  DOWN   ────┼───┼────────┤ Pin 15 (GP22)│
+│         ────┼───┤        │              │
+│  SELECT ────┼───┼────────┤ Pin 16 (GP23)│
+│         ────┼───┤        │              │
+│             │   │        │              │
+│             │   └────────┤ Pin 9 (GND)  │
 └─────────────┘            └──────────────┘
+
+Each button: [GPIO Pin] ──[Button]── GND
+```
+
+**Button Schematic:**
+```
+GPIO 17 ──┬── [Button] ── GND     (UP)
+          │
+         3.3V (via internal pull-up)
+
+GPIO 22 ──┬── [Button] ── GND     (DOWN)
+          │
+         3.3V (via internal pull-up)
+
+GPIO 23 ──┬── [Button] ── GND     (SELECT)
+          │
+         3.3V (via internal pull-up)
 ```
 
 ---
 
-### 4. Camera Module (CSI)
+### 3. Camera Module (CSI)
 
 **Connection Steps:**
 1. **Power down** the Raspberry Pi
@@ -259,7 +224,7 @@ Raspberry Pi 4B (top view)
 
 **Power Rails (Breadboard Setup):**
 - **3.3V rail**: ST7789 VCC, MCP3008 VDD & VREF
-- **5V rail**: HW-504 joystick (optional, can use 3.3V)
+- **5V rail**: Parallax joystick (optional, can use 3.3V)
 - **GND rail**: All component grounds
 
 **GPIO Pin Usage:**
@@ -552,7 +517,7 @@ JOYSTICK_SW_PIN = 23
 |------|----------|------------------|-------|
 | Raspberry Pi 4B (2GB/4GB) | 1 | $35-55 | 1GB may work but not recommended |
 | ST7789 Display (320x240) | 1 | $10-20 | Verify 3.3V compatibility |
-| HW-504 Joystick | 1 | $2-5 | Standard analog joystick |
+| Parallax 2-Axis Joystick (#27800) | 1 | $8-12 | Analog joystick HORIZ/VERT |
 | MCP3008 ADC | 1 | $3-5 | DIP-16 package for breadboard |
 | RPi Camera Module v2/v3 | 1 | $20-30 | v3 recommended for better image quality |
 | Camera Cable (15-pin) | 1 | $3-5 | Length as needed (6"-12") |

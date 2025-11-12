@@ -28,14 +28,10 @@ ST7789_CS_PIN: Final[int] = 8       # Chip Select (BOARD Pin 24)
 ST7789_MOSI_PIN: Final[int] = 10    # SPI0 MOSI (BOARD Pin 19)
 ST7789_SCLK_PIN: Final[int] = 11    # SPI0 Clock (BOARD Pin 23)
 
-# MCP3008 ADC for Joystick (SPI Port 1)
-MCP3008_CS_PIN: Final[int] = 16     # Chip Select
-MCP3008_MOSI_PIN: Final[int] = 20   # SPI1 MOSI
-MCP3008_MISO_PIN: Final[int] = 19   # SPI1 MISO
-MCP3008_CLK_PIN: Final[int] = 21    # SPI1 Clock
-
-# HW-504 Joystick Button
-JOYSTICK_SW_PIN: Final[int] = 23    # Digital button (active LOW)
+# Button Input (3 tactile switches)
+BUTTON_UP_PIN: Final[int] = 17      # UP button (BOARD Pin 11)
+BUTTON_DOWN_PIN: Final[int] = 22    # DOWN button (BOARD Pin 15)
+BUTTON_SELECT_PIN: Final[int] = 23  # SELECT button (BOARD Pin 16)
 
 # ==============================================================================
 # SPI CONFIGURATION
@@ -45,11 +41,6 @@ JOYSTICK_SW_PIN: Final[int] = 23    # Digital button (active LOW)
 DISPLAY_SPI_PORT: Final[int] = 0
 DISPLAY_SPI_DEVICE: Final[int] = 0
 DISPLAY_SPI_SPEED: Final[int] = 80_000_000  # 80 MHz
-
-# ADC SPI
-ADC_SPI_PORT: Final[int] = 1
-ADC_SPI_DEVICE: Final[int] = 0
-ADC_SPI_SPEED: Final[int] = 1_000_000       # 1 MHz
 
 # ==============================================================================
 # DISPLAY CONFIGURATION
@@ -71,22 +62,16 @@ MARGIN_TOP: Final[int] = 5
 PADDING: Final[int] = 5
 
 # ==============================================================================
-# JOYSTICK CONFIGURATION
+# BUTTON INPUT CONFIGURATION
 # ==============================================================================
 
-# ADC channels
-JOYSTICK_X_CHANNEL: Final[int] = 0
-JOYSTICK_Y_CHANNEL: Final[int] = 1
-
-# Analog calibration (10-bit ADC: 0-1023)
-JOYSTICK_CENTER: Final[int] = 512
-JOYSTICK_DEADZONE: Final[int] = 100         # No movement within ±100 of center
-JOYSTICK_THRESHOLD: Final[int] = 300        # Trigger movement at ±300 from center
-JOYSTICK_MAX: Final[int] = 1023
+# 3-button navigation (UP, DOWN, SELECT)
+# Buttons connected between GPIO pin and GND (using internal pull-up resistors)
+# Active LOW (button press = LOW, released = HIGH)
 
 # Polling and debouncing
-JOYSTICK_POLL_RATE: Final[int] = 100        # Hz (10ms interval)
-JOYSTICK_DEBOUNCE_MS: Final[int] = 50       # Button debounce time
+BUTTON_POLL_RATE: Final[int] = 100          # Hz (10ms interval)
+BUTTON_DEBOUNCE_MS: Final[int] = 50         # Debounce time in milliseconds
 
 # ==============================================================================
 # CAMERA CONFIGURATION

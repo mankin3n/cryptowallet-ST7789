@@ -1,6 +1,6 @@
 # SeedSigner Mini - Hardware Security Device
 
-Hardware security device for Raspberry Pi 4B with ST7789 320x240 TFT display, HW-504 joystick input, and camera module. Provides Bitcoin address generation, transaction signing, QR code generation/scanning, and air-gapped wallet functionality.
+Hardware security device for Raspberry Pi 4B with ST7789 320x240 TFT display, 3-button navigation, and camera module. Provides Bitcoin address generation, transaction signing, QR code generation/scanning, and air-gapped wallet functionality.
 
 ## Features
 
@@ -18,9 +18,12 @@ Hardware security device for Raspberry Pi 4B with ST7789 320x240 TFT display, HW
 - **ST7789 TFT Display** (320x240 pixels)
   - Connected via SPI0
   - GPIO pins: DC=24, RST=25, BL=12, CS=8
-- **HW-504 Joystick**
-  - Analog input via MCP3008 ADC on SPI1
-  - Button on GPIO 23
+- **3 Tactile Push Buttons** for navigation
+  - UP button: GPIO 17 (BOARD Pin 11)
+  - DOWN button: GPIO 22 (BOARD Pin 15)
+  - SELECT button: GPIO 23 (BOARD Pin 16)
+  - Wiring: Connect one side to GPIO, other side to GND
+  - Uses internal pull-up resistors (no external resistors needed)
 - **Raspberry Pi Camera Module** v2 or v3 (optional)
 
 ## Installation
@@ -90,12 +93,13 @@ pytest tests/ -v
 
 ## Navigation
 
-### Joystick Controls
+### Button Controls
 
-- **UP/DOWN**: Navigate menus, scroll content
-- **LEFT**: Go back to previous page
-- **RIGHT**: Enter submenu
-- **PRESS** (center button): Select item, confirm action
+- **UP**: Navigate up in menus, scroll up
+- **DOWN**: Navigate down in menus, scroll down
+- **SELECT**: Select item, confirm action, enter submenu
+
+Note: Navigation is forward-only. Return to home menu to access other sections.
 
 ### Page Structure
 
