@@ -5,6 +5,12 @@ Camera Display Test - Live Camera Feed on ST7789 Display
 Tests the camera and display by showing live camera feed on screen.
 Useful for verifying camera is working and properly focused.
 
+Shows:
+    - Live camera preview at 320x240
+    - FPS counter
+    - Frame count
+    - Camera model (e.g., Camera Module 3)
+
 Usage:
     python tests/test_camera_display.py
 
@@ -13,7 +19,8 @@ Controls:
 
 Hardware Required:
     - ST7789 Display (320x240)
-    - Raspberry Pi Camera Module v2 or v3
+    - Raspberry Pi Camera Module v1, v2, or v3
+    - Camera Module 3: Autofocus enabled automatically
 """
 
 import sys
@@ -54,6 +61,7 @@ class CameraDisplayTest:
         self.cli_input = get_cli_input()
         self.frame_count = 0
         self.start_time = 0
+        self.camera_model = "Unknown"
 
         logger.info("=" * 60)
         logger.info("Camera Display Test")
@@ -81,6 +89,15 @@ class CameraDisplayTest:
             return False
 
         logger.info("✓ Camera initialized")
+
+        # Get camera model
+        try:
+            if self.camera.camera is not None and hasattr(self.camera.camera, 'camera_properties'):
+                props = self.camera.camera.camera_properties
+                self.camera_model = props.get('Model', 'Unknown')
+                logger.info(f"  Camera Model: {self.camera_model}")
+        except Exception as e:
+            logger.debug(f"Could not get camera model: {e}")
 
         # Start camera capture
         try:
@@ -183,22 +200,32 @@ class CameraDisplayTest:
         except:
             font = ImageFont.load_default()
 
-        # Draw semi-transparent background for text
-        overlay_height = 25
-        overlay = Image.new('RGBA', (config.DISPLAY_WIDTH, overlay_height), (0, 0, 0, 180))
-        frame.paste(overlay, (0, 0), overlay)
+        # Draw semi-transparent background for text (top and bottom bars)
+        overlay_height_top = 25
+        overlay_height_bottom = 20
+        overlay_top = Image.new('RGBA', (config.DISPLAY_WIDTH, overlay_height_top), (0, 0, 0, 180))
+        overlay_bottom = Image.new('RGBA', (config.DISPLAY_WIDTH, overlay_height_bottom), (0, 0, 0, 180))
+        frame.paste(overlay_top, (0, 0), overlay_top)
+        frame.paste(overlay_bottom, (0, config.DISPLAY_HEIGHT - overlay_height_bottom), overlay_bottom)
 
-        # Draw FPS counter
+        # Draw FPS counter (top left)
         fps_text = f"FPS: {fps:.1f}"
         draw.text((5, 5), fps_text, fill=(0, 255, 0), font=font)
 
-        # Draw frame counter
+        # Draw frame counter (top center)
         frame_text = f"Frames: {self.frame_count}"
         draw.text((100, 5), frame_text, fill=(255, 255, 255), font=font)
 
-        # Draw quit hint
+        # Draw quit hint (top right)
         quit_text = "Q: Quit"
         draw.text((config.DISPLAY_WIDTH - 60, 5), quit_text, fill=(255, 165, 0), font=font)
+
+        # Draw camera model (bottom center)
+        camera_text = f"Camera: {self.camera_model}"
+        bbox = draw.textbbox((0, 0), camera_text, font=font)
+        text_width = bbox[2] - bbox[0]
+        x = (config.DISPLAY_WIDTH - text_width) // 2
+        draw.text((x, config.DISPLAY_HEIGHT - 17), camera_text, fill=(100, 200, 255), font=font)
 
         return frame
 

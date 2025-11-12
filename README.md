@@ -18,14 +18,16 @@ Hardware security device for Raspberry Pi 4B with ST7789 320x240 TFT display, 3-
 - **ST7789 TFT Display** (320x240 pixels)
   - Connected via SPI0
   - GPIO pins: DC=24, RST=25, BL=12, CS=8
-- **4 Tactile Push Buttons** for navigation
+- **5 Tactile Push Buttons** for navigation
   - UP button: GPIO 17 (BOARD Pin 11)
   - DOWN button: GPIO 22 (BOARD Pin 15)
   - SELECT button: GPIO 23 (BOARD Pin 16)
   - BACK button: GPIO 27 (BOARD Pin 13)
+  - RIGHT button: GPIO 18 (BOARD Pin 12)
   - Wiring: Connect one side to GPIO, other side to GND
   - Uses internal pull-up resistors (no external resistors needed)
-- **Raspberry Pi Camera Module** v2 or v3 (optional)
+- **Raspberry Pi Camera Module** v1, v2, or v3 (optional)
+  - Camera Module 3 recommended (autofocus, HDR support)
 
 ## Installation
 
@@ -95,10 +97,13 @@ pytest tests/ -v
 
 **Hardware tests:**
 
-Test camera and display (shows live camera feed):
+Test camera and display (shows live camera feed with camera model info):
 ```bash
 python tests/test_camera_display.py
 ```
+
+Shows live camera preview with FPS counter and camera model (e.g., "Camera Module 3").
+Camera Module 3 autofocus is enabled automatically.
 
 Test display only (shows color patterns and text):
 ```bash
@@ -115,6 +120,7 @@ python tests/test_display.py
 - **DOWN**: Navigate down in menus, scroll down
 - **SELECT**: Select item, confirm action, enter submenu
 - **BACK**: Go back to previous page/menu
+- **RIGHT**: Enter submenu, move right
 
 ### Keyboard/CLI Controls (Alternative)
 
@@ -123,6 +129,7 @@ The application also supports keyboard input via the terminal (works in parallel
 - **Arrow Up / W / 8**: Navigate up
 - **Arrow Down / S / 2**: Navigate down
 - **Arrow Left / A / 4**: Go back
+- **Arrow Right / D / 6**: Enter submenu, move right
 - **Enter / Space / 5**: Select/confirm
 - **Q**: Quit application
 

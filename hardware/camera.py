@@ -3,6 +3,10 @@ Raspberry Pi Camera Module Controller.
 
 Handles camera initialization, frame capture, and QR code detection.
 Provides non-blocking frame capture via background thread.
+
+Supports:
+- Raspberry Pi Camera Module v1, v2, v3
+- Camera Module 3 features: autofocus, HDR
 """
 
 import logging
@@ -61,23 +65,44 @@ class Camera:
             logger.info("Attempting to initialize camera...")
             self.camera = Picamera2()
 
+            # Get camera info
+            try:
+                camera_properties = self.camera.camera_properties
+                camera_model = camera_properties.get('Model', 'Unknown')
+                logger.info(f"  Camera detected: {camera_model}")
+            except:
+                logger.debug("Could not read camera properties")
+
             # Configure camera for preview
+            # Use create_preview_configuration for best performance with display
             camera_config = self.camera.create_preview_configuration(
                 main={"size": config.CAMERA_RESOLUTION, "format": config.CAMERA_FORMAT}
             )
             self.camera.configure(camera_config)
 
+            # Set controls for better image quality
+            # Camera Module 3 has autofocus, v1/v2 will ignore this
+            try:
+                self.camera.set_controls({
+                    "AfMode": 2,  # AfModeEnum.Continuous (autofocus for v3)
+                    "AfSpeed": 1,  # AfSpeedEnum.Fast
+                })
+                logger.debug("  Autofocus enabled (Camera Module 3)")
+            except Exception as e:
+                logger.debug(f"  Autofocus not available: {e}")
+
             # Start camera
             self.camera.start()
             time.sleep(0.5)  # Allow camera to warm up
 
-            logger.info(f"✓ Camera hardware connected: {config.CAMERA_RESOLUTION} @ {config.CAMERA_FPS}fps")
+            logger.info(f"✓ Camera initialized: {config.CAMERA_RESOLUTION} @ {config.CAMERA_FPS}fps")
             return True
 
         except Exception as e:
             logger.warning(f"Camera not detected: {e}")
             logger.info("  → Check camera cable connection")
             logger.info("  → Enable camera: sudo raspi-config -> Interface Options -> Camera")
+            logger.info("  → Test with: libcamera-hello")
             logger.info("  → Continuing without camera")
             return True
 

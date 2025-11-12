@@ -4,7 +4,7 @@ SeedSigner Mini - Hardware Security Device
 Main Application Entry Point
 
 Hardware security device for Raspberry Pi 4B with ST7789 320x240 display,
-4-button navigation + CLI keyboard input, and camera module. Provides Bitcoin
+5-button navigation + CLI keyboard input, and camera module. Provides Bitcoin
 address generation, transaction signing, QR code generation/scanning, and
 air-gapped wallet functionality.
 
@@ -13,7 +13,7 @@ Usage:
     MOCK_HARDWARE=True python main.py  # Run without hardware (testing)
 
 CLI Controls (works in parallel with hardware buttons):
-    ↑/W/8: UP  │  ↓/S/2: DOWN  │  ←/A/4: BACK  │  Enter/Space/5: SELECT  │  Q: Quit
+    ↑/W/8: UP  │  ↓/S/2: DOWN  │  ←/A/4: BACK  │  →/D/6: RIGHT  │  Enter/Space/5: SELECT  │  Q: Quit
 """
 
 import logging

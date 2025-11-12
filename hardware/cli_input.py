@@ -8,6 +8,7 @@ Keyboard Controls:
 - Arrow Up / 'w' / '8': UP
 - Arrow Down / 's' / '2': DOWN
 - Arrow Left / 'a' / '4': BACK
+- Arrow Right / 'd' / '6': RIGHT
 - Enter / Space / '5': SELECT
 - 'q': Quit application
 """
@@ -90,8 +91,8 @@ class CLIInput:
 
         logger.info("═" * 60)
         logger.info("CLI Keyboard Controls Enabled:")
-        logger.info("  ↑/W/8: UP  │  ↓/S/2: DOWN  │  ←/A/4: BACK  │  Enter/Space/5: SELECT")
-        logger.info("  Q: Quit")
+        logger.info("  ↑/W/8: UP  │  ↓/S/2: DOWN  │  ←/A/4: BACK  │  →/D/6: RIGHT")
+        logger.info("  Enter/Space/5: SELECT  │  Q: Quit")
         logger.info("═" * 60)
 
     def stop(self) -> None:
@@ -127,18 +128,27 @@ class CLIInput:
         try:
             ch = sys.stdin.read(1)
 
-            # Handle arrow keys (escape sequences)
+            # Handle arrow keys and escape sequences
             if ch == '\x1b':  # ESC
-                # Check if there's more input
-                if select.select([sys.stdin], [], [], 0.1)[0]:
+                # Wait briefly for the rest of the sequence
+                # Arrow keys send: ESC [ A/B/C/D
+                if select.select([sys.stdin], [], [], 0.01)[0]:
                     ch2 = sys.stdin.read(1)
-                    if ch2 == '[' and select.select([sys.stdin], [], [], 0.1)[0]:
-                        ch3 = sys.stdin.read(1)
-                        return f'\x1b[{ch3}'
+                    if ch2 == '[':
+                        # Read the final character
+                        if select.select([sys.stdin], [], [], 0.01)[0]:
+                            ch3 = sys.stdin.read(1)
+                            # Return complete escape sequence
+                            return ch + ch2 + ch3
+                    # Return what we have
+                    return ch + ch2
+                # Just ESC pressed alone
+                return ch
 
             return ch
 
-        except:
+        except Exception as e:
+            logger.debug(f"Key read error: {e}")
             return ''
 
     def _input_loop(self) -> None:
@@ -165,21 +175,30 @@ class CLIInput:
                 # Map keys to directions
                 direction = None
 
-                # UP
+                # UP (Arrow Up or w or 8)
                 if key in ['\x1b[A', 'w', 'W', '8']:
                     direction = config.INPUT_UP
+                    logger.debug(f"CLI key: UP ({repr(key)})")
 
-                # DOWN
+                # DOWN (Arrow Down or s or 2)
                 elif key in ['\x1b[B', 's', 'S', '2']:
                     direction = config.INPUT_DOWN
+                    logger.debug(f"CLI key: DOWN ({repr(key)})")
 
-                # LEFT (BACK)
+                # LEFT/BACK (Arrow Left or a or 4)
                 elif key in ['\x1b[D', 'a', 'A', '4']:
                     direction = config.INPUT_LEFT
+                    logger.debug(f"CLI key: BACK ({repr(key)})")
+
+                # RIGHT (Arrow Right or d or 6)
+                elif key in ['\x1b[C', 'd', 'D', '6']:
+                    direction = config.INPUT_RIGHT
+                    logger.debug(f"CLI key: RIGHT ({repr(key)})")
 
                 # SELECT (Enter, Space, or numpad 5)
                 elif key in ['\r', '\n', ' ', '5']:
                     direction = config.INPUT_PRESS
+                    logger.debug(f"CLI key: SELECT ({repr(key)})")
 
                 # QUIT
                 elif key in ['q', 'Q']:
@@ -192,7 +211,6 @@ class CLIInput:
 
                 # Send event via callback
                 if direction and self.callback:
-                    logger.debug(f"CLI: {direction}")
                     self.callback(direction)
 
             except Exception as e:
