@@ -61,37 +61,58 @@ class GPIOManager:
             GPIO.setmode(GPIO.BCM)
             GPIO.setwarnings(False)
 
-            # Setup display pins
-            GPIO.setup(config.ST7789_DC_PIN, GPIO.OUT)
-            GPIO.setup(config.ST7789_RST_PIN, GPIO.OUT)
-            GPIO.setup(config.ST7789_LED_PIN, GPIO.OUT)
+            # Setup display pins (optional - display driver handles its own GPIO)
+            try:
+                GPIO.setup(config.ST7789_DC_PIN, GPIO.OUT)
+                GPIO.setup(config.ST7789_RST_PIN, GPIO.OUT)
+                GPIO.setup(config.ST7789_LED_PIN, GPIO.OUT)
+
+                # Initialize display backlight PWM
+                self.backlight_pwm = GPIO.PWM(config.ST7789_LED_PIN, 1000)  # 1kHz
+                self.backlight_pwm.start(config.UI_BRIGHTNESS)
+                logger.info("Display GPIO pins configured")
+            except Exception as e:
+                logger.warning(f"Display GPIO setup failed: {e}")
 
             # Setup joystick button pin
-            GPIO.setup(config.JOYSTICK_SW_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            try:
+                GPIO.setup(config.JOYSTICK_SW_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+                logger.info("Joystick button configured")
+            except Exception as e:
+                logger.warning(f"Joystick button setup failed: {e}")
 
-            # Initialize display backlight PWM
-            self.backlight_pwm = GPIO.PWM(config.ST7789_LED_PIN, 1000)  # 1kHz
-            self.backlight_pwm.start(config.UI_BRIGHTNESS)
-
-            # Setup SPI for display (Port 0)
-            self.display_spi = spidev.SpiDev()
-            self.display_spi.open(config.DISPLAY_SPI_PORT, config.DISPLAY_SPI_DEVICE)
-            self.display_spi.max_speed_hz = config.DISPLAY_SPI_SPEED
-            self.display_spi.mode = 0
+            # Setup SPI for display (Port 0) - optional, display driver handles its own SPI
+            try:
+                self.display_spi = spidev.SpiDev()
+                self.display_spi.open(config.DISPLAY_SPI_PORT, config.DISPLAY_SPI_DEVICE)
+                self.display_spi.max_speed_hz = config.DISPLAY_SPI_SPEED
+                self.display_spi.mode = 0
+                logger.info(f"Display SPI configured (Port {config.DISPLAY_SPI_PORT})")
+            except Exception as e:
+                logger.warning(f"Display SPI setup failed: {e}")
+                self.display_spi = None
 
             # Setup SPI for ADC (Port 1)
-            self.adc_spi = spidev.SpiDev()
-            self.adc_spi.open(config.ADC_SPI_PORT, config.ADC_SPI_DEVICE)
-            self.adc_spi.max_speed_hz = config.ADC_SPI_SPEED
-            self.adc_spi.mode = 0
+            try:
+                self.adc_spi = spidev.SpiDev()
+                self.adc_spi.open(config.ADC_SPI_PORT, config.ADC_SPI_DEVICE)
+                self.adc_spi.max_speed_hz = config.ADC_SPI_SPEED
+                self.adc_spi.mode = 0
+                logger.info(f"ADC SPI configured (Port {config.ADC_SPI_PORT})")
+            except Exception as e:
+                logger.warning(f"ADC SPI setup failed: {e}")
+                self.adc_spi = None
 
             self.initialized = True
-            logger.info("GPIO setup complete")
+            logger.info("GPIO setup complete (some components may be unavailable)")
             return True
 
         except Exception as e:
-            logger.error(f"GPIO setup failed: {e}")
-            return False
+            logger.error(f"GPIO setup failed completely: {e}")
+            # Don't fail - allow app to continue in degraded mode
+            self.initialized = True
+            logger.warning("Continuing with limited GPIO functionality")
+            return True
 
     def set_brightness(self, brightness: int) -> None:
         """

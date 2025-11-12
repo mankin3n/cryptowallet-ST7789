@@ -97,35 +97,44 @@ class Application:
         logger.info("Setting up hardware...")
 
         try:
-            # Setup GPIO
+            # Setup GPIO (non-critical - continue if fails)
             if not self.gpio.setup():
-                logger.error("GPIO setup failed")
-                return False
+                logger.warning("GPIO setup failed (continuing in degraded mode)")
 
-            # Setup display
+            # Setup display (non-critical - continue if fails)
             if not self.display.setup():
-                logger.error("Display setup failed")
-                return False
+                logger.warning("Display setup failed (continuing with mock display)")
 
-            # Setup camera
+            # Setup camera (non-critical)
             if not self.camera.setup():
                 logger.warning("Camera setup failed (continuing without camera)")
 
             # Start joystick polling
-            self.joystick.start()
+            try:
+                self.joystick.start()
+            except Exception as e:
+                logger.warning(f"Joystick startup failed: {e}")
 
             # Start camera capture
-            self.camera.start_capture()
+            try:
+                self.camera.start_capture()
+            except Exception as e:
+                logger.warning(f"Camera capture failed: {e}")
 
             # Initialize Bitcoin wallet with test key
-            self._initialize_wallet()
+            try:
+                self._initialize_wallet()
+            except Exception as e:
+                logger.warning(f"Wallet initialization failed: {e}")
 
-            logger.info("Hardware setup complete")
+            logger.info("Hardware setup complete (some components may be unavailable)")
             return True
 
         except Exception as e:
-            logger.error(f"Setup failed: {e}")
-            return False
+            logger.error(f"Critical setup error: {e}")
+            # Continue anyway - allow app to run in degraded mode
+            logger.warning("Continuing in degraded mode")
+            return True
 
     def _initialize_wallet(self) -> None:
         """Initialize Bitcoin wallet with sample data."""
@@ -240,10 +249,8 @@ def main() -> int:
         signal.signal(signal.SIGINT, app.handle_signal)
         signal.signal(signal.SIGTERM, app.handle_signal)
 
-        # Setup hardware
-        if not app.setup():
-            logger.error("Application setup failed")
-            return 1
+        # Setup hardware (continues even if some components fail)
+        app.setup()
 
         # Run application
         app.run()

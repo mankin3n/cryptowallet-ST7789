@@ -63,16 +63,27 @@ class DisplayBase(ABC):
 
 
 class Display(DisplayBase):
-    """ST7789 TFT display controller for real hardware."""
+    """ST7789 TFT display controller - tries real hardware, falls back to mock."""
 
     def __init__(self) -> None:
         """Initialize display controller."""
         super().__init__()
         self.device: Optional[any] = None
+        self.is_mock: bool = False
 
     def setup(self) -> bool:
-        """Initialize the ST7789 display."""
+        """
+        Try to initialize the ST7789 display.
+        Falls back to mock mode if hardware not available.
+        """
+        # Skip if already in forced mock mode
+        if _DISPLAY_MOCK_MODE:
+            logger.info("Display in mock mode (driver not available)")
+            self.is_mock = True
+            return True
+
         try:
+            logger.info("Attempting to initialize ST7789 display...")
             self.device = ST7789_320x240(
                 width=self.width,
                 height=self.height,
@@ -86,11 +97,26 @@ class Display(DisplayBase):
                 use_bcm_numbering=True
             )
             self.clear()
-            logger.info("Display initialized successfully")
+            self.is_mock = False
+            logger.info("✓ Display hardware connected and initialized successfully")
+            return True
+        except FileNotFoundError as e:
+            logger.warning(f"Display hardware not found: {e}")
+            logger.info("  → Check if SPI is enabled: sudo raspi-config")
+            logger.info("  → Continuing with mock display")
+            self.is_mock = True
+            return True
+        except PermissionError as e:
+            logger.warning(f"Display permission denied: {e}")
+            logger.info("  → Add user to spi group: sudo usermod -a -G spi $USER")
+            logger.info("  → Continuing with mock display")
+            self.is_mock = True
             return True
         except Exception as e:
-            logger.error(f"Display initialization failed: {e}")
-            return False
+            logger.warning(f"Display initialization failed: {e}")
+            logger.info("  → Continuing with mock display")
+            self.is_mock = True
+            return True
 
     def show_image(self, image: Image.Image) -> None:
         """Display a PIL Image on the screen."""
@@ -99,16 +125,23 @@ class Display(DisplayBase):
         if elapsed < self.target_frame_time:
             time.sleep(self.target_frame_time - elapsed)
 
+        # Mock mode - just simulate timing
+        if self.is_mock or not self.device:
+            self.last_frame_time = time.time()
+            return
+
         try:
             if image.size != (self.width, self.height):
                 image = image.resize((self.width, self.height), Image.Resampling.LANCZOS)
             if image.mode != 'RGB':
                 image = image.convert('RGB')
-            if self.device:
-                self.device.show_image(image)
+            self.device.show_image(image)
             self.last_frame_time = time.time()
         except Exception as e:
             logger.error(f"Failed to display image: {e}")
+            # Fall back to mock mode on error
+            self.is_mock = True
+            logger.warning("Display hardware failed, switching to mock mode")
 
     def set_brightness(self, brightness: int) -> None:
         """Set display backlight brightness."""
@@ -119,8 +152,14 @@ class Display(DisplayBase):
 
     def cleanup(self) -> None:
         """Cleanup display resources."""
+        if self.is_mock or not self.device:
+            logger.info("Display cleanup skipped (mock mode)")
+            return
+
         try:
             self.clear()
+            if self.device and hasattr(self.device, 'cleanup'):
+                self.device.cleanup()
             logger.info("Display cleanup complete")
         except Exception as e:
             logger.error(f"Display cleanup failed: {e}")
@@ -160,14 +199,12 @@ _display: Optional[DisplayBase] = None
 def get_display() -> DisplayBase:
     """
     Get singleton display instance.
+    Always returns Display which tries hardware first, then falls back to mock.
 
     Returns:
-        Display instance (real or mock)
+        Display instance
     """
     global _display
     if _display is None:
-        if _DISPLAY_MOCK_MODE:
-            _display = MockDisplay()
-        else:
-            _display = Display()
+        _display = Display()
     return _display

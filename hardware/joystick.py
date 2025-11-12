@@ -61,6 +61,7 @@ class Joystick:
         self.last_button_time: float = 0.0
         self.last_direction: str = config.INPUT_NONE
         self.last_direction_time: float = 0.0
+        self.is_available: bool = False
 
         logger.info("Joystick controller created")
 
@@ -69,6 +70,15 @@ class Joystick:
         if self.running:
             logger.warning("Joystick already running")
             return
+
+        # Check if ADC SPI is available
+        if hasattr(self.gpio, 'adc_spi') and self.gpio.adc_spi is not None:
+            self.is_available = True
+            logger.info("✓ Joystick ADC (MCP3008) detected")
+        else:
+            self.is_available = False
+            logger.info("  Joystick ADC not available - input disabled")
+            logger.info("  → Check MCP3008 wiring and SPI1 enabled")
 
         self.running = True
         self.poll_thread = threading.Thread(target=self._poll_loop, daemon=True)

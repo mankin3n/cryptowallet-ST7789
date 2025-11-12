@@ -47,16 +47,18 @@ class Camera:
 
     def setup(self) -> bool:
         """
-        Initialize camera hardware.
+        Try to initialize camera hardware.
+        Falls back to mock mode if camera not available.
 
         Returns:
-            True if initialization successful, False otherwise
+            True always (continues in degraded mode)
         """
         if _CAMERA_MOCK_MODE:
-            logger.info("Mock mode: Camera setup skipped")
+            logger.info("Camera in mock mode (picamera2 not available)")
             return True
 
         try:
+            logger.info("Attempting to initialize camera...")
             self.camera = Picamera2()
 
             # Configure camera for preview
@@ -69,12 +71,15 @@ class Camera:
             self.camera.start()
             time.sleep(0.5)  # Allow camera to warm up
 
-            logger.info(f"Camera initialized: {config.CAMERA_RESOLUTION} @ {config.CAMERA_FPS}fps")
+            logger.info(f"✓ Camera hardware connected: {config.CAMERA_RESOLUTION} @ {config.CAMERA_FPS}fps")
             return True
 
         except Exception as e:
-            logger.error(f"Camera initialization failed: {e}")
-            return False
+            logger.warning(f"Camera not detected: {e}")
+            logger.info("  → Check camera cable connection")
+            logger.info("  → Enable camera: sudo raspi-config -> Interface Options -> Camera")
+            logger.info("  → Continuing without camera")
+            return True
 
     def start_capture(self) -> None:
         """Start background frame capture thread."""
