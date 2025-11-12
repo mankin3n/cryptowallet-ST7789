@@ -17,7 +17,7 @@ Hardware security device for Raspberry Pi 4B with ST7789 320x240 TFT display, HW
 - **Raspberry Pi 4B** (or compatible)
 - **ST7789 TFT Display** (320x240 pixels)
   - Connected via SPI0
-  - GPIO pins: DC=25, RST=27, LED=24
+  - GPIO pins: DC=24, RST=25, BL=12, CS=8
 - **HW-504 Joystick**
   - Analog input via MCP3008 ADC on SPI1
   - Button on GPIO 23
@@ -118,9 +118,9 @@ All configuration is in `config.py`. Key settings:
 
 ```python
 # GPIO Pins (BCM numbering)
-ST7789_DC_PIN = 25
-ST7789_RST_PIN = 27
-ST7789_LED_PIN = 24
+ST7789_DC_PIN = 24
+ST7789_RST_PIN = 25
+ST7789_LED_PIN = 12
 JOYSTICK_SW_PIN = 23
 
 # Display

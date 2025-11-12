@@ -21,12 +21,12 @@ DEBUG_MODE: bool = os.getenv('DEBUG_MODE', 'False').lower() == 'true'
 # ==============================================================================
 
 # ST7789 Display (SPI Port 0)
-ST7789_DC_PIN: Final[int] = 25      # Data/Command pin (BOARD Pin 22)
-ST7789_RST_PIN: Final[int] = 27     # Reset pin (BOARD Pin 13)
-ST7789_LED_PIN: Final[int] = 24     # Backlight (PWM capable, BOARD Pin 18)
-ST7789_CS_PIN: Final[int] = 8       # Chip Select (can be tied to GND)
-ST7789_MOSI_PIN: Final[int] = 10    # SPI0 MOSI
-ST7789_SCLK_PIN: Final[int] = 11    # SPI0 Clock
+ST7789_DC_PIN: Final[int] = 24      # Data/Command pin (BOARD Pin 18)
+ST7789_RST_PIN: Final[int] = 25     # Reset pin (BOARD Pin 22)
+ST7789_LED_PIN: Final[int] = 12     # Backlight (PWM capable, BOARD Pin 32)
+ST7789_CS_PIN: Final[int] = 8       # Chip Select (BOARD Pin 24)
+ST7789_MOSI_PIN: Final[int] = 10    # SPI0 MOSI (BOARD Pin 19)
+ST7789_SCLK_PIN: Final[int] = 11    # SPI0 Clock (BOARD Pin 23)
 
 # MCP3008 ADC for Joystick (SPI Port 1)
 MCP3008_CS_PIN: Final[int] = 16     # Chip Select

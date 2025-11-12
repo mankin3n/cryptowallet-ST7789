@@ -45,16 +45,16 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
    GPIO4  (7) (8)  GPIO14   │   Ethernet  │
      GND  (9) (10) GPIO15   └─────────────┘
   GPIO17 (11) (12) GPIO18
-  GPIO27 (13) (14) GND      ◄── ST7789 RST
+  GPIO27 (13) (14) GND
   GPIO22 (15) (16) GPIO23 ◄── Joystick Button
-     3V3 (17) (18) GPIO24 ◄── ST7789 BL
+     3V3 (17) (18) GPIO24 ◄── ST7789 DC
   GPIO10 (19) (20) GND
-   GPIO9 (21) (22) GPIO25 ◄── ST7789 DC
+   GPIO9 (21) (22) GPIO25 ◄── ST7789 RST
   GPIO11 (23) (24) GPIO8  ◄── ST7789 CS
      GND (25) (26) GPIO7
    GPIO0 (27) (28) GPIO1
    GPIO5 (29) (30) GND
-   GPIO6 (31) (32) GPIO12
+   GPIO6 (31) (32) GPIO12 ◄── ST7789 BL
   GPIO13 (33) (34) GND
   GPIO19 (35) (36) GPIO16 ◄── MCP3008 CS
   GPIO26 (37) (38) GPIO20 ◄── MCP3008 MOSI
@@ -87,10 +87,10 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
 | GND | GND | Pin 20 | Ground | Common ground |
 | SCL (CLK) | GPIO 11 | Pin 23 | SPI0 SCLK | Clock signal |
 | SDA (MOSI) | GPIO 10 | Pin 19 | SPI0 MOSI | Data out |
-| RES (RST) | GPIO 27 | Pin 13 | Reset | Hardware reset |
-| DC (A0) | GPIO 25 | Pin 22 | Data/Command | Register select |
+| RES (RST) | GPIO 25 | Pin 22 | Reset | Hardware reset |
+| DC (A0) | GPIO 24 | Pin 18 | Data/Command | Register select |
 | CS | GPIO 8 | Pin 24 | SPI0 CE0 | Chip select |
-| BL (LED) | GPIO 24 | Pin 18 | Backlight | PWM control |
+| BL (LED) | GPIO 12 | Pin 32 | Backlight | PWM control |
 
 **Connection Steps:**
 1. **Power down** the Raspberry Pi completely
@@ -98,10 +98,10 @@ Complete wiring instructions for SeedSigner Mini hardware security device.
 3. Connect GND to any ground pin (pin 20 recommended)
 4. Connect SCL to GPIO 11 (pin 23)
 5. Connect SDA to GPIO 10 (pin 19)
-6. Connect RES to GPIO 27 (pin 13)
-7. Connect DC to GPIO 25 (pin 22)
+6. Connect RES to GPIO 25 (pin 22)
+7. Connect DC to GPIO 24 (pin 18)
 8. Connect CS to GPIO 8 (pin 24)
-9. Connect BL to GPIO 24 (pin 18)
+9. Connect BL to GPIO 12 (pin 32)
 
 **Wiring Diagram:**
 ```
@@ -269,9 +269,9 @@ Raspberry Pi 4B (top view)
 | GPIO 8 | 24 | SPI0 CE0 (CS) | ST7789 Display |
 | GPIO 10 | 19 | SPI0 MOSI | ST7789 Display |
 | GPIO 11 | 23 | SPI0 SCLK | ST7789 Display |
-| GPIO 24 | 18 | PWM (Backlight) | ST7789 Display |
-| GPIO 25 | 22 | Data/Command | ST7789 Display |
-| GPIO 27 | 13 | Reset | ST7789 Display |
+| GPIO 12 | 32 | PWM (Backlight) | ST7789 Display |
+| GPIO 24 | 18 | Data/Command | ST7789 Display |
+| GPIO 25 | 22 | Reset | ST7789 Display |
 | GPIO 16 | 36 | SPI1 CE0 (CS) | MCP3008 ADC |
 | GPIO 19 | 35 | SPI1 MISO | MCP3008 ADC |
 | GPIO 20 | 38 | SPI1 MOSI | MCP3008 ADC |
@@ -437,8 +437,8 @@ python main.py
 - Ensure proper ground connection
 
 **No Backlight:**
-- Check BL (LED) pin connection to GPIO 24
-- Test PWM: `raspi-gpio set 24 op pn dl`
+- Check BL (LED) pin connection to GPIO 12
+- Test PWM: `raspi-gpio set 12 op pn dl`
 - Verify backlight pin voltage with multimeter
 
 ### Joystick Issues
@@ -530,9 +530,9 @@ dtoverlay=spi1-3cs
 To change pin assignments, edit `config.py`:
 ```python
 # Display pins
-ST7789_DC_PIN = 25
-ST7789_RST_PIN = 27
-ST7789_LED_PIN = 24
+ST7789_DC_PIN = 24
+ST7789_RST_PIN = 25
+ST7789_LED_PIN = 12
 
 # MCP3008 pins
 MCP3008_CS_PIN = 16
