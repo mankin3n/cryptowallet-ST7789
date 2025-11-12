@@ -294,12 +294,25 @@ class ST7789_320x240:
                 f'Got {img_width}x{img_height}.'
             )
 
-        # Convert image to RGB565 format
-        # Convert to BGR;16 (which gives us a weird RGB565-like format)
-        # then byteswap to get proper RGB565
-        arr = array.array("H", image.convert("BGR;16").tobytes())
-        arr.byteswap()
-        pixel_data = arr.tobytes()
+        # Ensure image is in RGB mode
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+
+        # Convert RGB888 to RGB565 format
+        # RGB565: RRRRR GGGGGG BBBBB (16 bits per pixel)
+        pixels = image.load()
+        rgb565_data = []
+
+        for y in range(self.height):
+            for x in range(self.width):
+                r, g, b = pixels[x, y]
+                # Convert 8-bit RGB to 5-6-5 format
+                rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
+                # Split into two bytes (big-endian)
+                rgb565_data.append((rgb565 >> 8) & 0xFF)  # High byte
+                rgb565_data.append(rgb565 & 0xFF)         # Low byte
+
+        pixel_data = bytes(rgb565_data)
 
         # Set window to full screen
         self.set_window(x_start, y_start, self.width - 1, self.height - 1)

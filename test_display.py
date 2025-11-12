@@ -45,9 +45,18 @@ def test_display():
     print("ST7789 320x240 Display Test")
     print("="*50)
 
+    display = None
+
     # Initialize display
     print("\n[1/7] Initializing display...")
     try:
+        # Clean up any previous instances
+        try:
+            import RPi.GPIO as GPIO
+            GPIO.cleanup()
+        except:
+            pass
+
         display = ST7789_320x240(
             width=320,
             height=240,
@@ -63,8 +72,14 @@ def test_display():
         print("✓ Display initialized successfully")
         print(f"  Resolution: {display.width}x{display.height}")
         print(f"  Backlight: ON")
+
+        # Clear screen to black
+        display.clear(0x0000)
+        print("✓ Screen cleared")
     except Exception as e:
         print(f"✗ Display initialization failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
     time.sleep(1)
@@ -183,11 +198,19 @@ def test_display():
     # Cleanup
     print("\n[CLEANUP] Turning off display...")
     try:
-        display.clear(0x0000)  # Black screen
-        display.cleanup()
-        print("✓ Display cleanup complete")
+        if display:
+            display.clear(0x0000)  # Black screen
+            display.cleanup()
+            print("✓ Display cleanup complete")
     except Exception as e:
         print(f"✗ Cleanup failed: {e}")
+    finally:
+        # Ensure GPIO is cleaned up
+        try:
+            import RPi.GPIO as GPIO
+            GPIO.cleanup()
+        except:
+            pass
 
     print("\n" + "="*50)
     print("All tests completed successfully! ✓")
@@ -210,9 +233,23 @@ if __name__ == "__main__":
         exit(0 if success else 1)
     except KeyboardInterrupt:
         print("\n\nTest interrupted by user")
+        # Clean up GPIO
+        try:
+            import RPi.GPIO as GPIO
+            GPIO.cleanup()
+            print("GPIO cleaned up")
+        except:
+            pass
         exit(1)
     except Exception as e:
         print(f"\n\n✗ Unexpected error: {e}")
         import traceback
         traceback.print_exc()
+        # Clean up GPIO
+        try:
+            import RPi.GPIO as GPIO
+            GPIO.cleanup()
+            print("GPIO cleaned up")
+        except:
+            pass
         exit(1)
