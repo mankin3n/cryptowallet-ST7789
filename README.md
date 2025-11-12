@@ -88,9 +88,24 @@ MOCK_HARDWARE=True python main.py
 
 ### Run Tests
 
+**Unit tests:**
 ```bash
 pytest tests/ -v
 ```
+
+**Hardware tests:**
+
+Test camera and display (shows live camera feed):
+```bash
+python tests/test_camera_display.py
+```
+
+Test display only (shows color patterns and text):
+```bash
+python tests/test_display.py
+```
+
+**Note**: Hardware tests require actual hardware connected. Press Q to quit any test.
 
 ## Navigation
 
