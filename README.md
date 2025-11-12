@@ -93,13 +93,27 @@ pytest tests/ -v
 
 ## Navigation
 
-### Button Controls
+### Hardware Button Controls
 
 - **UP**: Navigate up in menus, scroll up
 - **DOWN**: Navigate down in menus, scroll down
 - **SELECT**: Select item, confirm action, enter submenu
 
 Note: Navigation is forward-only. Return to home menu to access other sections.
+
+### Keyboard/CLI Controls (Alternative)
+
+The application also supports keyboard input via the terminal (works in parallel with buttons and in mock mode):
+
+- **Arrow Up / W / 8**: Navigate up
+- **Arrow Down / S / 2**: Navigate down
+- **Enter / Space / 5**: Select/confirm
+- **Q**: Quit application
+
+This is especially useful for:
+- Development and testing without hardware buttons
+- Running in mock mode (`MOCK_HARDWARE=True`)
+- Faster testing and debugging
 
 ### Page Structure
 

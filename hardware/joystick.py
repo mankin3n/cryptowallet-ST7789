@@ -198,6 +198,18 @@ class Joystick:
         while not self.event_queue.empty():
             self.event_queue.get()
 
+    def inject_event(self, direction: str) -> None:
+        """
+        Inject an event into the queue (for CLI input).
+
+        Args:
+            direction: Input direction constant from config
+        """
+        if direction in [config.INPUT_UP, config.INPUT_DOWN, config.INPUT_PRESS,
+                        config.INPUT_LEFT, config.INPUT_RIGHT]:
+            self.event_queue.put(JoystickEvent(direction))
+            logger.debug(f"Event injected: {direction}")
+
 
 # Singleton instance
 _joystick: Optional[Joystick] = None

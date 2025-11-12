@@ -31,6 +31,7 @@ from hardware.gpio_manager import get_gpio_manager
 from hardware.display import get_display
 from hardware.joystick import get_joystick
 from hardware.camera import get_camera
+from hardware.cli_input import get_cli_input
 
 # Import UI system
 from ui.themes import get_theme
@@ -53,6 +54,7 @@ class Application:
         display: Display controller
         joystick: Joystick controller
         camera: Camera controller
+        cli_input: CLI/keyboard input handler
         screen_manager: Screen rendering manager
         menu_system: Menu and navigation system
         theme: UI theme
@@ -73,6 +75,7 @@ class Application:
         self.display = get_display()
         self.joystick = get_joystick()
         self.camera = get_camera()
+        self.cli_input = get_cli_input()
 
         # UI
         self.screen_manager = get_screen_manager()
@@ -115,6 +118,13 @@ class Application:
                 self.joystick.start()
             except Exception as e:
                 logger.warning(f"Joystick startup failed: {e}")
+
+            # Start CLI input (works in parallel with buttons, even in mock mode)
+            try:
+                self.cli_input.start(callback=self.joystick.inject_event)
+                logger.info("CLI keyboard input enabled")
+            except Exception as e:
+                logger.warning(f"CLI input startup failed: {e}")
 
             # Start camera capture
             try:
@@ -206,6 +216,9 @@ class Application:
         logger.info("Cleaning up...")
 
         try:
+            # Stop CLI input
+            self.cli_input.stop()
+
             # Stop joystick
             self.joystick.stop()
 
