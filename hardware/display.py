@@ -16,7 +16,7 @@ import config
 
 if not config.MOCK_HARDWARE:
     try:
-        from ST7789 import ST7789
+        from hardware.st7789_320x240 import ST7789_320x240
     except ImportError:
         logging.warning("ST7789 library not available, forcing mock mode")
         config.MOCK_HARDWARE = True
@@ -71,16 +71,17 @@ class Display(DisplayBase):
     def setup(self) -> bool:
         """Initialize the ST7789 display."""
         try:
-            self.device = ST7789(
-                port=config.DISPLAY_SPI_PORT,
-                cs=config.ST7789_CS_PIN,
-                dc=config.ST7789_DC_PIN,
-                rst=config.ST7789_RST_PIN,
-                backlight=config.ST7789_LED_PIN,
-                spi_speed_hz=config.DISPLAY_SPI_SPEED,
+            self.device = ST7789_320x240(
                 width=self.width,
                 height=self.height,
-                rotation=config.DISPLAY_ROTATION
+                dc_pin=config.ST7789_DC_PIN,
+                rst_pin=config.ST7789_RST_PIN,
+                bl_pin=config.ST7789_LED_PIN,
+                cs_pin=config.ST7789_CS_PIN,
+                spi_bus=config.DISPLAY_SPI_PORT,
+                spi_device=0,
+                spi_speed_hz=config.DISPLAY_SPI_SPEED,
+                use_bcm_numbering=True
             )
             self.clear()
             logger.info("Display initialized successfully")
@@ -102,7 +103,7 @@ class Display(DisplayBase):
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             if self.device:
-                self.device.display(image)
+                self.device.show_image(image)
             self.last_frame_time = time.time()
         except Exception as e:
             logger.error(f"Failed to display image: {e}")

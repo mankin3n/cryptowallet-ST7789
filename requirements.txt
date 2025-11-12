@@ -1,11 +1,11 @@
 # Display driver for ST7789 TFT
-# ST7789==1.0.1
+# Using custom st7789_320x240.py driver (no external library needed)
 
 # Image processing
 Pillow>=10.0.0
 
 # GPIO control (Raspberry Pi)
-# RPi.GPIO>=0.7.0
+RPi.GPIO>=0.7.0
 # gpiozero>=2.0.0
 
 # Camera
@@ -20,7 +20,7 @@ bitcoinlib>=0.6.0
 ecdsa>=0.18.0
 
 # SPI interface
-# spidev>=3.6
+spidev>=3.6
 
 # Environment configuration
 python-dotenv>=1.0.0
