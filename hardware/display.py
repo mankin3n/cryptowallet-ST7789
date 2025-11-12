@@ -14,12 +14,14 @@ from typing import Optional
 from PIL import Image
 import config
 
+# Try to import ST7789 driver
+_DISPLAY_MOCK_MODE = config.MOCK_HARDWARE
 if not config.MOCK_HARDWARE:
     try:
         from hardware.st7789_320x240 import ST7789_320x240
     except ImportError:
-        logging.warning("ST7789 library not available, forcing mock mode")
-        config.MOCK_HARDWARE = True
+        logging.warning("ST7789 library not available, using mock display")
+        _DISPLAY_MOCK_MODE = True
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ class DisplayBase(ABC):
         self.height: int = config.DISPLAY_HEIGHT
         self.last_frame_time: float = 0.0
         self.target_frame_time: float = 1.0 / config.DISPLAY_FPS
-        logger.info(f"Display created {self.width}x{self.height} @ {config.DISPLAY_FPS}fps (mock={config.MOCK_HARDWARE})")
+        logger.info(f"Display created {self.width}x{self.height} @ {config.DISPLAY_FPS}fps (mock={_DISPLAY_MOCK_MODE})")
 
     @abstractmethod
     def setup(self) -> bool:
@@ -164,7 +166,7 @@ def get_display() -> DisplayBase:
     """
     global _display
     if _display is None:
-        if config.MOCK_HARDWARE:
+        if _DISPLAY_MOCK_MODE:
             _display = MockDisplay()
         else:
             _display = Display()

@@ -9,13 +9,15 @@ import logging
 from typing import Optional
 import config
 
+# Try to import GPIO libraries
+_GPIO_MOCK_MODE = config.MOCK_HARDWARE
 if not config.MOCK_HARDWARE:
     try:
         import RPi.GPIO as GPIO
         import spidev
     except ImportError:
-        logging.warning("RPi.GPIO or spidev not available, forcing mock mode")
-        config.MOCK_HARDWARE = True
+        logging.warning("RPi.GPIO or spidev not available, using mock GPIO")
+        _GPIO_MOCK_MODE = True
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ class GPIOManager:
         self.adc_spi: Optional[any] = None
         self.initialized: bool = False
 
-        logger.info(f"GPIO Manager created (mock_mode={config.MOCK_HARDWARE})")
+        logger.info(f"GPIO Manager created (mock_mode={_GPIO_MOCK_MODE})")
 
     def setup(self) -> bool:
         """
@@ -49,7 +51,7 @@ class GPIOManager:
             logger.warning("GPIO already initialized")
             return True
 
-        if config.MOCK_HARDWARE:
+        if _GPIO_MOCK_MODE:
             logger.info("Mock mode: Skipping GPIO setup")
             self.initialized = True
             return True
@@ -100,7 +102,7 @@ class GPIOManager:
         """
         brightness = max(0, min(100, brightness))
 
-        if config.MOCK_HARDWARE:
+        if _GPIO_MOCK_MODE:
             logger.debug(f"Mock mode: Set brightness to {brightness}%")
             return
 
@@ -115,7 +117,7 @@ class GPIOManager:
         Returns:
             True if button is pressed, False otherwise
         """
-        if config.MOCK_HARDWARE:
+        if _GPIO_MOCK_MODE:
             return False
 
         try:
@@ -135,7 +137,7 @@ class GPIOManager:
         Returns:
             10-bit ADC value (0-1023)
         """
-        if config.MOCK_HARDWARE:
+        if _GPIO_MOCK_MODE:
             return config.JOYSTICK_CENTER
 
         if not self.adc_spi:
@@ -158,7 +160,7 @@ class GPIOManager:
 
     def cleanup(self) -> None:
         """Cleanup GPIO pins and close SPI interfaces."""
-        if config.MOCK_HARDWARE:
+        if _GPIO_MOCK_MODE:
             logger.info("Mock mode: Skipping GPIO cleanup")
             return
 

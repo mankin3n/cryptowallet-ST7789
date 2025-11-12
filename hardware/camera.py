@@ -13,12 +13,14 @@ from typing import Optional
 from PIL import Image
 import config
 
+# Try to import camera library
+_CAMERA_MOCK_MODE = config.MOCK_HARDWARE
 if not config.MOCK_HARDWARE:
     try:
         from picamera2 import Picamera2
     except ImportError:
-        logging.warning("picamera2 not available, forcing mock mode for camera")
-        config.MOCK_HARDWARE = True
+        logging.warning("picamera2 not available, using mock camera")
+        _CAMERA_MOCK_MODE = True
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ class Camera:
         self.running: bool = False
         self.capture_thread: Optional[threading.Thread] = None
 
-        logger.info(f"Camera controller created (mock={config.MOCK_HARDWARE})")
+        logger.info(f"Camera controller created (mock={_CAMERA_MOCK_MODE})")
 
     def setup(self) -> bool:
         """
@@ -50,7 +52,7 @@ class Camera:
         Returns:
             True if initialization successful, False otherwise
         """
-        if config.MOCK_HARDWARE:
+        if _CAMERA_MOCK_MODE:
             logger.info("Mock mode: Camera setup skipped")
             return True
 
@@ -80,7 +82,7 @@ class Camera:
             logger.warning("Camera capture already running")
             return
 
-        if config.MOCK_HARDWARE:
+        if _CAMERA_MOCK_MODE:
             logger.info("Mock mode: Camera capture simulated")
             self.running = True
             self.capture_thread = threading.Thread(target=self._mock_capture_loop, daemon=True)
@@ -175,7 +177,7 @@ class Camera:
         Returns:
             PIL Image or None if capture failed
         """
-        if config.MOCK_HARDWARE:
+        if _CAMERA_MOCK_MODE:
             # Return mock frame
             return Image.new('RGB', config.CAMERA_RESOLUTION, config.COLOR_DARK_GRAY)
 
@@ -200,7 +202,7 @@ class Camera:
         """Cleanup camera resources."""
         self.stop_capture()
 
-        if config.MOCK_HARDWARE:
+        if _CAMERA_MOCK_MODE:
             logger.info("Mock mode: Camera cleanup skipped")
             return
 
