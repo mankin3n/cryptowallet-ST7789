@@ -17,7 +17,6 @@ from ui.widgets import (
     draw_button, draw_slider, draw_progress_bar, draw_spinner,
     create_qr_code
 )
-from ui import ascii_art
 
 logger = logging.getLogger(__name__)
 

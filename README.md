@@ -37,8 +37,10 @@ cd cryptowallet-ST7789
 
 ```bash
 sudo apt-get update
+# For Raspberry Pi OS Bookworm (or newer), use libtiff6
+# For older versions (Buster/Bullseye), use libtiff5
 sudo apt-get install -y python3-pip python3-dev python3-pil \
-    libopenjp2-7 libtiff5 libatlas-base-dev \
+    libopenjp2-7 libtiff6 libatlas-base-dev \
     libzbar0 libzbar-dev
 ```
 
