@@ -38,7 +38,9 @@ def render_splash_page(state: PageState, theme: Theme) -> Image.Image:
     # App name
     app_name = "CryptoWallet"
     font_large = theme.get_font('header')
-    text_width, text_height = draw.textsize(app_name, font=font_large)
+    bbox = draw.textbbox((0, 0), app_name, font=font_large)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
     draw.text(
         ((config.DISPLAY_WIDTH - text_width) / 2, 80),
         app_name,
@@ -49,7 +51,8 @@ def render_splash_page(state: PageState, theme: Theme) -> Image.Image:
     # Loading text
     loading_text = "Initializing..."
     font_small = theme.get_font('body')
-    text_width, _ = draw.textsize(loading_text, font=font_small)
+    bbox = draw.textbbox((0, 0), loading_text, font=font_small)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         ((config.DISPLAY_WIDTH - text_width) / 2, 130),
         loading_text,
@@ -168,7 +171,8 @@ def render_verify_signature_page(state: PageState, theme: Theme) -> Image.Image:
 
     # Status text
     font_large = theme.get_font('header')
-    text_width, _ = draw.textsize(status_text, font=font_large)
+    bbox = draw.textbbox((0, 0), status_text, font=font_large)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         ((config.DISPLAY_WIDTH - text_width) / 2, y),
         f"{icon} {status_text}",
@@ -244,7 +248,8 @@ def render_generate_qr_page(state: PageState, theme: Theme) -> Image.Image:
     # Zoom indicator
     zoom_text = f"Zoom: {state.qr_zoom}%"
     font_small = theme.get_font('hint')
-    text_width, _ = draw.textsize(zoom_text, font=font_small)
+    bbox = draw.textbbox((0, 0), zoom_text, font=font_small)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         ((config.DISPLAY_WIDTH - text_width) / 2, config.DISPLAY_HEIGHT - config.STATUS_BAR_HEIGHT - 25),
         zoom_text,
@@ -594,7 +599,8 @@ def render_reset_setting_page(state: PageState, theme: Theme) -> Image.Image:
     # Warning text
     warning_text = "Are you sure you want to reset?"
     font_body = theme.get_font('body')
-    text_width, _ = draw.textsize(warning_text, font=font_body)
+    bbox = draw.textbbox((0, 0), warning_text, font=font_body)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         (dialog_x + (dialog_width - text_width) / 2, dialog_y + 20),
         warning_text,
@@ -605,7 +611,8 @@ def render_reset_setting_page(state: PageState, theme: Theme) -> Image.Image:
     # Subtext
     subtext = "All settings will be lost."
     font_small = theme.get_font('hint')
-    text_width, _ = draw.textsize(subtext, font=font_small)
+    bbox = draw.textbbox((0, 0), subtext, font=font_small)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         (dialog_x + (dialog_width - text_width) / 2, dialog_y + 50),
         subtext,
@@ -699,7 +706,8 @@ def render_about_page(state: PageState, theme: Theme) -> Image.Image:
                 font=theme.get_font('body'),
                 fill=theme.get_color('MUTED')
             )
-            text_width, _ = draw.textsize(value, font=theme.get_font('body'))
+            bbox = draw.textbbox((0, 0), value, font=theme.get_font('body'))
+            text_width = bbox[2] - bbox[0]
             draw.text(
                 (config.DISPLAY_WIDTH - config.MARGIN_SIDE - text_width, y),
                 value,
@@ -742,7 +750,8 @@ def render_loading_page(state: PageState, theme: Theme) -> Image.Image:
     # Loading message
     message = state.loading_message if state.loading_message else "Please wait..."
     font_body = theme.get_font('body')
-    text_width, _ = draw.textsize(message, font=font_body)
+    bbox = draw.textbbox((0, 0), message, font=font_body)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         ((config.DISPLAY_WIDTH - text_width) / 2, y),
         message,

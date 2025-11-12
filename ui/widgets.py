@@ -100,7 +100,8 @@ def draw_header(
 
     # Draw title
     font_header = theme.get_font('header')
-    text_width, _ = draw.textsize(title, font=font_header)
+    bbox = draw.textbbox((0, 0), title, font=font_header)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         ((config.DISPLAY_WIDTH - text_width) / 2, (config.HEADER_HEIGHT - 20) / 2),
         title,
@@ -159,7 +160,8 @@ def draw_status_bar(
 
     # Time
     font_status = theme.get_font('status')
-    text_width, _ = draw.textsize(time_str, font=font_status)
+    bbox = draw.textbbox((0, 0), time_str, font=font_status)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         ((config.DISPLAY_WIDTH - text_width) / 2, y_text),
         time_str,
@@ -170,7 +172,8 @@ def draw_status_bar(
     # Hint text
     if hint:
         font_hint = theme.get_font('hint')
-        text_width, _ = draw.textsize(hint, font=font_hint)
+        bbox = draw.textbbox((0, 0), hint, font=font_hint)
+        text_width = bbox[2] - bbox[0]
         draw.text(
             (config.DISPLAY_WIDTH - config.MARGIN_SIDE - text_width, y_text),
             hint,
@@ -270,7 +273,9 @@ def draw_button(
 
     # Draw text
     font_body = theme.get_font('body')
-    text_width, text_height = draw.textsize(text, font=font_body)
+    bbox = draw.textbbox((0, 0), text, font=font_body)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
     text_x = x + (width - text_width) / 2
     text_y = y + (height - text_height) / 2
     text_color = theme.get_color('WHITE') if selected else theme.get_color('TEXT')
@@ -370,7 +375,8 @@ def draw_progress_bar(
     # Draw percentage
     percent_text = f"{int(progress * 100)}%"
     font_hint = theme.get_font('hint')
-    text_width, _ = draw.textsize(percent_text, font=font_hint)
+    bbox = draw.textbbox((0, 0), percent_text, font=font_hint)
+    text_width = bbox[2] - bbox[0]
     draw.text(
         (x + width + 10, y),
         percent_text,
